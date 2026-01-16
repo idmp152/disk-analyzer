@@ -248,7 +248,6 @@ int main(int argc, char **argv) {
                             File file = {};
                             file.parent = fileNameAttribute->parentRecordNumber;
                             file.name = DuplicateName(fileNameAttribute->fileName, fileNameAttribute->fileNameLength);
-                            fprintf(stderr, "%s \n", file.name);
 
                             uint64_t oldLength = arrlenu(files);
 
