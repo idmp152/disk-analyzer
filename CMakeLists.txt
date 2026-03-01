@@ -18,10 +18,10 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(raylib)
 
-add_executable(disk_analyzer main.c)
+add_executable(disk_analyzer src/main.c src/ui_components.c src/app_state.c)
 
 target_compile_options(disk_analyzer PUBLIC)
-target_include_directories(disk_analyzer PUBLIC .)
+target_include_directories(disk_analyzer PUBLIC src)
 
 target_link_libraries(disk_analyzer PUBLIC raylib)
 
