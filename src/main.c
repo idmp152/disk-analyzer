@@ -5,7 +5,7 @@
 #include "ui_components.h"
 
 void HandleClayErrors(Clay_ErrorData errorData) {
-    printf("%s", errorData.errorText.chars);
+    printf("%s\n", errorData.errorText.chars);
 }
 
 void LoadFonts(Font* fonts) {
@@ -14,7 +14,7 @@ void LoadFonts(Font* fonts) {
     Clay_SetMeasureTextFunction(Raylib_MeasureText, fonts);
 }
 
-void HandleMouseInput_BeforeRender() {
+void HandleMouseInput_BeforeLayout() {
     Vector2 mouse = GetMousePosition();
     Vector2 scroll = GetMouseWheelMoveV();
     
@@ -29,10 +29,14 @@ void HandleMouseInput_BeforeRender() {
     );
 }
 
-void HandleMouseInput_AfterRender(AppState* state) {
+void HandleMouseInput_AfterLayout(AppState* state) {
+    Clay_ElementId selector = Clay_GetElementId(CLAY_STRING("ChoiceSelector"));
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        Clay_ElementId selector = Clay_GetElementId(CLAY_STRING("ChoiceSelector"));
-        state->dropdownOpen = Clay_PointerOver(selector) ? !state->dropdownOpen : false;
+        if (Clay_PointerOver(selector)) {
+            state->dropdownOpen = !state->dropdownOpen;
+        } else {
+            state->dropdownOpen = false;
+        }
     }
 }
 
@@ -58,6 +62,8 @@ int main(void) {
 
     SetExitKey(KEY_NULL);
 
+    //Clay_SetDebugModeEnabled(true);
+
     while(!WindowShouldClose()) {
         clayDimensions = (Clay_Dimensions) {
             .width = GetScreenWidth(),
@@ -66,20 +72,15 @@ int main(void) {
 
         Clay_SetLayoutDimensions(clayDimensions);
 
-        HandleMouseInput_BeforeRender();
+        HandleMouseInput_BeforeLayout();
 
         Clay_BeginLayout();
 
-        Clay_Sizing layoutExpand = {
-            .width = CLAY_SIZING_GROW(),
-            .height = CLAY_SIZING_GROW()
-        };
-
-        UI_RenderUI(&app_state);
-
-        HandleMouseInput_AfterRender(&app_state);
-
+        UI_OuterContainer(&app_state);
+        
         Clay_RenderCommandArray renderCommands = Clay_EndLayout();
+        
+        HandleMouseInput_AfterLayout(&app_state); 
 
         BeginDrawing();
         ClearBackground(BLACK);

@@ -18,7 +18,7 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(raylib)
 
-add_executable(disk_analyzer src/main.c src/ui_components.c src/app_state.c)
+add_executable(disk_analyzer src/main.c src/ui_components.c src/app_state.c src/data.c src/tree_arena.c src/util.c src/file_provider.c)
 
 target_compile_options(disk_analyzer PUBLIC)
 target_include_directories(disk_analyzer PUBLIC src)

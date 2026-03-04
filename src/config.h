@@ -2,7 +2,7 @@
 #include "clay.h"
 
 typedef struct {
-    Clay_Color primary, secondary, tertiary, highlight, background, text_primary;
+    Clay_Color primary, secondary, tertiary, highlight, background, text_primary, text_secondary;
 } ColorScheme;
 
 typedef struct {
@@ -15,7 +15,8 @@ static const ColorScheme g_colorscheme = {
     .tertiary = { 110, 110, 110, 255 },
     .highlight = { 70, 70, 70, 255 },
     .background = { 43, 41, 51, 255 },
-    .text_primary = { 255, 255 , 255, 255 }
+    .text_primary = { 255, 255 , 255, 255 },
+    .text_secondary = { 180, 180, 180, 255 }
 };
 
 static const UIConfig g_uiconfig = {

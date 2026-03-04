@@ -1,5 +1,6 @@
 #include "ui_components.h"
 #include "config.h"
+#include <stdio.h>
 
 
 static const int TABLE_ROW_HEIGHT = 40;
@@ -12,105 +13,22 @@ static const int FIELD_FILENAME_WIDTH = 300;
 static const int FIELD_SIZE_WIDTH = 150;
 static const int FIELD_CREATED_AT_WIDTH = 200;
 static const int FIELD_MODIFIED_AT_WIDTH = 200;
+static const int TREE_INDENT = 12;
+static const int EXPAND_ICON_WIDTH = 28;
 
-void UI_TableColumn(TableColumnConfig config) {
-    CLAY({
-        .layout = {
-            .sizing = {
-                .width = CLAY_SIZING_FIXED(config.width),
-                .height = CLAY_SIZING_GROW()
-            },
-            .padding = CLAY_PADDING_ALL(g_uiconfig.padding)
-        }
-    }) {
-        CLAY_TEXT(config.text, TEXT_MAIN(config.textColor));
+static uint32_t StringHash(const char* str) {
+    if (!str) return 0;
+    uint32_t hash = 5381;
+    int c;
+    while ((c = *str++)) {
+        hash = ((hash << 5) + hash) + c; // hash * 33 + c
     }
+    return hash;
 }
-
-void UI_TableRow(TableRowConfig config) {
-    CLAY({
-        .backgroundColor = Clay_Hovered() ? config.hoverColor : config.inactiveColor,
-        .layout = {
-            .sizing = {
-                .width = CLAY_SIZING_GROW(),
-                .height = CLAY_SIZING_FIXED(config.rowHeight)
-            }
-        }
-    }) {
-        UI_TableColumn((TableColumnConfig){ .text = config.file->name, .textColor = config.textColor, .width = config.filenameWidth });
-        UI_TableColumn((TableColumnConfig){ .text = config.file->size, .textColor = config.textColor, .width = config.sizeWidth });
-        UI_TableColumn((TableColumnConfig){ .text = config.file->created_at, .textColor = config.textColor, .width = config.createdWidth });
-        UI_TableColumn((TableColumnConfig){ .text = config.file->modified_at, .textColor = config.textColor, .width = config.modifiedWidth });
-    }
-}
-
-void UI_FileTableHeader(FileTableConfig config) {
-    CLAY({
-        .id = CLAY_ID("FileTreeHeader"),
-        .layout = {
-            .sizing = {
-                .width = CLAY_SIZING_GROW(),
-                .height = CLAY_SIZING_FIXED(config.rowHeight)
-            }
-        },
-        .backgroundColor = config.headerBg,
-        .border = { 
-            .width = { .betweenChildren = g_uiconfig.border_width }, 
-            .color = g_colorscheme.primary 
-        }
-    }) {
-        UI_TableColumn((TableColumnConfig){ CLAY_STRING("Filename"), config.headerText, config.filenameWidth });
-        UI_TableColumn((TableColumnConfig){ CLAY_STRING("Size"), config.headerText, config.sizeWidth });
-        UI_TableColumn((TableColumnConfig){ CLAY_STRING("Created At"), config.headerText, config.createdWidth });
-        UI_TableColumn((TableColumnConfig){ CLAY_STRING("Modified At"), config.headerText, config.modifiedWidth });
-    }
-}
-
-void UI_FileTableContent(FileTableConfig config) {
-    CLAY({
-        .id = CLAY_ID("FileTreeContent"),
-        .layout = {
-            .sizing = CLAY_SIZING_GROW(),
-            .layoutDirection = CLAY_TOP_TO_BOTTOM
-        },
-        .clip = { .vertical = true, .childOffset = Clay_GetScrollOffset() }
-    }) {
-        for (int i = 0; i < config.fileCount; ++i) {
-            UI_TableRow((TableRowConfig){
-                .file = &config.files[i],
-                .textColor = config.rowText,
-                .hoverColor = config.rowHover,
-                .inactiveColor = config.rowInactive,
-                .filenameWidth = config.filenameWidth,
-                .sizeWidth = config.sizeWidth,
-                .createdWidth = config.createdWidth,
-                .modifiedWidth = config.modifiedWidth,
-                .rowHeight = config.rowHeight
-            });
-        }
-    }
-}
-
-void UI_FileTable(FileTableConfig config) {
-    CLAY({
-        .id = CLAY_ID("FileTree"),
-        .layout = {
-            .sizing = CLAY_SIZING_GROW(),
-            .layoutDirection = CLAY_TOP_TO_BOTTOM
-        }
-    }) {
-        UI_FileTableHeader(config);
-        UI_FileTableContent(config);
-    }
-}
-
-// ─────────────────────────────────────────────────────────────
-// Header Bar Sub-Components
-// ─────────────────────────────────────────────────────────────
 
 static void HandleDropdownOptionInteraction(Clay_ElementId elementId, 
                                             Clay_PointerData pointerData, 
-                                            intptr_t userData) {
+                                            void* userData) {
     DropdownOptionData* data = (DropdownOptionData*)userData;
     if (pointerData.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         *(data->selectedIndexPtr) = data->buttonIndex;
@@ -120,14 +38,14 @@ static void HandleDropdownOptionInteraction(Clay_ElementId elementId,
 static void UI_DropdownOption(Clay_String text, Clay_Color textColor, 
                                Clay_Color hoverColor, Clay_Color inactiveColor,
                                DropdownOptionData* data) {
-    CLAY({
+    CLAY(CLAY_IDI("DropdownOption", data->buttonIndex), {
         .backgroundColor = Clay_Hovered() ? hoverColor : inactiveColor,
         .layout = {
             .padding = CLAY_PADDING_ALL(g_uiconfig.padding),
             .sizing = { .width = CLAY_SIZING_GROW() }
         }
     }) {
-        Clay_OnHover(HandleDropdownOptionInteraction, (intptr_t)data);
+        Clay_OnHover(HandleDropdownOptionInteraction, (void*)data);
         CLAY_TEXT(text, TEXT_MAIN(textColor));
     }
 }
@@ -136,18 +54,18 @@ static void UI_DropdownMenu(Clay_String* options, int count, int* selectedIndex,
                             Clay_Color bgColor, Clay_Color hoverColor, 
                             Clay_Color textColor, Clay_Color borderColor,
                             int menuWidth) {
-    CLAY({
-        .id = CLAY_ID("DriveMenu"),
+    CLAY(CLAY_ID("DriveMenu"), {
         .floating = { 
             .attachTo = CLAY_ATTACH_TO_PARENT,
             .attachPoints = {
                 .element = CLAY_ATTACH_POINT_LEFT_TOP,
                 .parent = CLAY_ATTACH_POINT_LEFT_BOTTOM
-            }
+            },
+            .zIndex = 100
         },
         .layout = {
             .layoutDirection = CLAY_TOP_TO_BOTTOM,
-            .sizing = { .width = CLAY_SIZING_FIXED(menuWidth) }
+            .sizing = { .width = CLAY_SIZING_FIXED(menuWidth), .height = CLAY_SIZING_FIT() }
         },
         .backgroundColor = bgColor,
         .border = { 
@@ -164,8 +82,7 @@ static void UI_DropdownMenu(Clay_String* options, int count, int* selectedIndex,
 }
 
 void UI_DiskSelector(DiskSelectorConfig config) {
-    CLAY({
-        .id = CLAY_ID("DiskChoiceHeader"),
+    CLAY(CLAY_ID("DiskChoiceHeader"), {
         .layout = {
             .sizing = {
                 .width = CLAY_SIZING_FIXED(config.headerWidth),
@@ -175,15 +92,14 @@ void UI_DiskSelector(DiskSelectorConfig config) {
             .padding = CLAY_PADDING_ALL(config.padding)
         }
     }) {
-        CLAY({
-            .id = CLAY_ID("DiskChoiceLine"),
+        CLAY(CLAY_ID("DiskChoiceLine"), {
             .layout = {
                 .sizing = { .width = CLAY_SIZING_GROW() },
                 .layoutDirection = CLAY_LEFT_TO_RIGHT,
                 .childGap = 8
             }
         }) {
-            CLAY({
+            CLAY(CLAY_ID("DiskChoiceText"), {
                 .layout = {
                     .sizing = {
                         .width = CLAY_SIZING_FIT(),
@@ -194,9 +110,7 @@ void UI_DiskSelector(DiskSelectorConfig config) {
                 CLAY_TEXT(CLAY_STRING("Choose:"), TEXT_MAIN(config.textColor));
             }
             
-            // Selector button + dropdown
-            CLAY({
-                .id = CLAY_ID("ChoiceSelector"),
+            CLAY(CLAY_ID("ChoiceSelector"), {
                 .layout = {
                     .sizing = {
                         .width = CLAY_SIZING_GROW(),
@@ -218,8 +132,8 @@ void UI_DiskSelector(DiskSelectorConfig config) {
     }
 }
 
-void UI_InfoLabel(InfoLabelConfig config) {
-    CLAY({
+void UI_InfoLabel(InfoLabelConfig config, Clay_ElementId id) {
+    CLAY(id, {
         .layout = {
             .sizing = {
                 .width = CLAY_SIZING_GROW(),
@@ -233,18 +147,20 @@ void UI_InfoLabel(InfoLabelConfig config) {
 }
 
 void UI_ProgramTitle(PanelConfig config) {
-    CLAY({
-        .id = CLAY_ID("ProgramInfoHeader"),
+    CLAY(CLAY_ID("ProgramInfoHeader"), {
         .layout = {
             .sizing = {
-                .width = CLAY_SIZING_FIXED(PROGRAM_INFO_HEADER_WIDTH), // from constants
+                .width = CLAY_SIZING_FIXED(PROGRAM_INFO_HEADER_WIDTH),
                 .height = CLAY_SIZING_GROW()
             }
         }
     }) {
-        CLAY({
+        CLAY(CLAY_ID("ProgramInfoHeaderText"), {
             .layout = {
-                .sizing = CLAY_SIZING_GROW(),
+                .sizing = {
+                    .width = CLAY_SIZING_GROW(),
+                    .height = CLAY_SIZING_GROW()
+                },
                 .padding = CLAY_PADDING_ALL(config.padding)
             }
         }) {
@@ -253,13 +169,180 @@ void UI_ProgramTitle(PanelConfig config) {
     }
 }
 
-// ─────────────────────────────────────────────────────────────
-// Composite Components
-// ─────────────────────────────────────────────────────────────
+static void HandleExpandInteraction(Clay_ElementId elementId, 
+                                     Clay_PointerData pointerData, 
+                                     void* userData) {
+    TreeNode* node = (TreeNode*)userData;
+    
+    if (pointerData.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        if (node && node->type == NODE_TYPE_DIRECTORY) {
+            TreeNode_ToggleExpand(node);
+        }
+    }
+}
+
+void UI_TreeRow(TreeRowConfig config) {
+    TreeNode* node = config.node;
+
+    uint32_t nodeId = StringHash(node->fullPath.chars);
+
+    CLAY(CLAY_IDI("TreeRow", nodeId), {
+        .backgroundColor = Clay_Hovered() ? config.hoverColor : config.inactiveColor,
+        .layout = {
+            .sizing = {
+                .width = CLAY_SIZING_GROW(),
+                .height = CLAY_SIZING_FIXED(config.rowHeight)
+            }
+        }
+    }) {
+        if (node->type == NODE_TYPE_DIRECTORY) {
+            CLAY(CLAY_IDI("ExpandArrow", nodeId), {
+                .layout = {
+                    .sizing = {
+                        .width = CLAY_SIZING_FIXED(EXPAND_ICON_WIDTH),
+                        .height = CLAY_SIZING_GROW()
+                    },
+                    .padding = CLAY_PADDING_ALL(g_uiconfig.padding)
+                }
+            }) {
+                Clay_OnHover(HandleExpandInteraction, (void*)node);
+                
+                Clay_String arrow = node->isExpanded ? 
+                    CLAY_STRING("-") : CLAY_STRING("+");
+                
+                CLAY_TEXT(arrow, TEXT_MAIN(config.expandIconColor));
+            }
+        } else {
+            CLAY(CLAY_IDI("FileIcon", nodeId),{
+                .layout = {
+                    .sizing = {
+                        .width = CLAY_SIZING_FIXED(EXPAND_ICON_WIDTH),
+                        .height = CLAY_SIZING_GROW()
+                    }
+                }
+            }) {
+            }
+        }
+        
+        if (node->depth > 0) {
+           CLAY(CLAY_IDI("Indent", nodeId), {
+                .layout = {
+                    .sizing = {
+                        .width = CLAY_SIZING_FIXED(node->depth * config.indent),
+                        .height = CLAY_SIZING_GROW()
+                    }
+                }
+            }) {}
+        }
+        
+        CLAY(CLAY_IDI("Name", nodeId), {
+            .layout = {
+                .sizing = {
+                    .width = CLAY_SIZING_FIXED(config.nameWidth),
+                    .height = CLAY_SIZING_GROW()
+                },
+                .padding = CLAY_PADDING_ALL(g_uiconfig.padding)
+            }
+        }) {
+            CLAY_TEXT(node->name, TEXT_MAIN(config.textColor));
+        }
+        
+        CLAY(CLAY_IDI("Size", nodeId), {
+            .layout = {
+                .sizing = {
+                    .width = CLAY_SIZING_FIXED(config.sizeWidth),
+                    .height = CLAY_SIZING_GROW()
+                },
+                .padding = CLAY_PADDING_ALL(g_uiconfig.padding)
+            }
+        }) {
+            CLAY_TEXT(node->displaySize, TEXT_MAIN(config.textColor));
+        }
+    }
+}
+
+void UI_FileTreeView(FileTreeViewConfig config) {
+    CLAY(CLAY_ID("FileTree"), {
+        .layout = {
+            .sizing = {
+                .width = CLAY_SIZING_GROW(),
+                .height = CLAY_SIZING_GROW()
+            },
+            .layoutDirection = CLAY_TOP_TO_BOTTOM
+        },
+        .backgroundColor = config.rowInactive
+    }) {
+        CLAY(CLAY_ID("FileTreeHeader"), {
+            .layout = {
+                .sizing = {
+                    .width = CLAY_SIZING_GROW(),
+                    .height = CLAY_SIZING_FIXED(config.rowHeight)
+                }
+            },
+            .backgroundColor = config.headerBg,
+            .border = { 
+                .width = { .betweenChildren = g_uiconfig.border_width }, 
+                .color = g_colorscheme.primary 
+            }
+        }) {
+            CLAY(CLAY_ID("NameColumn"), {
+                .layout = {
+                    .sizing = {
+                        .width = CLAY_SIZING_FIXED(EXPAND_ICON_WIDTH + config.nameWidth),
+                        .height = CLAY_SIZING_GROW()
+                    },
+                    .padding = CLAY_PADDING_ALL(g_uiconfig.padding)
+                }
+            }) {
+                CLAY_TEXT(CLAY_STRING("Name"), TEXT_MAIN(config.headerText));
+            }
+            CLAY(CLAY_ID("SizeColumn"), {
+                .layout = {
+                    .sizing = {
+                        .width = CLAY_SIZING_FIXED(config.sizeWidth),
+                        .height = CLAY_SIZING_GROW()
+                    },
+                    .padding = CLAY_PADDING_ALL(g_uiconfig.padding)
+                }
+            }) {
+                CLAY_TEXT(CLAY_STRING("Size"), TEXT_MAIN(config.headerText));
+            }
+        }
+        
+        CLAY(CLAY_ID("FileTreeContent"), {
+            .layout = {
+                .sizing = {
+                    .width = CLAY_SIZING_GROW(),
+                    .height = CLAY_SIZING_GROW()
+                },
+                .layoutDirection = CLAY_TOP_TO_BOTTOM
+            },
+            .clip = { .vertical = true, .childOffset = Clay_GetScrollOffset() }
+        }) {
+            FileTree_BuildVisibleList(config.tree);
+            
+            for (int i = 0; i < config.tree->visibleCount; i++) {
+                TreeNode* node = config.tree->visibleNodes[i];
+                
+                UI_TreeRow((TreeRowConfig){
+                    .node = node,
+                    .textColor = config.rowText,
+                    .hoverColor = config.rowHover,
+                    .inactiveColor = config.rowInactive,
+                    .expandIconColor = config.expandIconColor,
+                    .indent = TREE_INDENT,
+                    .rowHeight = config.rowHeight,
+                    .nameWidth = config.nameWidth,
+                    .sizeWidth = config.sizeWidth
+                });
+            }
+        }
+    }
+}
+
 
 void UI_HeaderBar(AppState* app_state) {
-    CLAY({
-        .id = CLAY_ID("HeaderBar"),
+    CLAY(CLAY_ID("HeaderBar"), {
         .layout = {
             .sizing = {
                 .width = CLAY_SIZING_GROW(),
@@ -273,7 +356,6 @@ void UI_HeaderBar(AppState* app_state) {
             .color = g_colorscheme.secondary 
         }
     }) {
-        // Disk selector dropdown
         UI_DiskSelector((DiskSelectorConfig){
             .drives = app_state->availableDrives,
             .driveCount = app_state->driveCount,
@@ -289,9 +371,7 @@ void UI_HeaderBar(AppState* app_state) {
             .padding = g_uiconfig.padding
         });
         
-        // "Selected: Drive X:" info
-        CLAY({
-            .id = CLAY_ID("DiskInfoHeader"),
+        CLAY(CLAY_ID("DiskInfoHeader"), {
             .layout = {
                 .sizing = {
                     .width = CLAY_SIZING_GROW(),
@@ -299,28 +379,39 @@ void UI_HeaderBar(AppState* app_state) {
                 }
             }
         }) {
-            CLAY({
-                .id = CLAY_ID("SelectedDiskRow"),
+            CLAY(CLAY_ID("SelectedDiskRow"), {
                 .layout = {
                     .sizing = { .width = CLAY_SIZING_GROW() },
                     .layoutDirection = CLAY_LEFT_TO_RIGHT,
                     .childGap = 8
                 }
             }) {
-                UI_InfoLabel((InfoLabelConfig){ 
-                    .label = CLAY_STRING("Selected:"), 
-                    .textColor = g_colorscheme.text_primary,
-                    .padding = g_uiconfig.padding 
-                });
-                UI_InfoLabel((InfoLabelConfig){ 
-                    .label = app_state->availableDrives[app_state->selectedDrive], 
-                    .textColor = g_colorscheme.text_primary,
-                    .padding = g_uiconfig.padding 
-                });
+                CLAY(CLAY_ID("SelectedLabel"), {
+                    .layout = {
+                        .sizing = {
+                            .width = CLAY_SIZING_GROW(),
+                            .height = CLAY_SIZING_GROW()
+                        },
+                        .padding = CLAY_PADDING_ALL(g_uiconfig.padding)
+                    }
+                }) {
+                    CLAY_TEXT(CLAY_STRING("Selected: "), TEXT_MAIN(g_colorscheme.text_primary));
+                }
+
+                CLAY(CLAY_ID("DriveName"), {
+                    .layout = {
+                        .sizing = {
+                            .width = CLAY_SIZING_GROW(),
+                            .height = CLAY_SIZING_GROW()
+                        },
+                        .padding = CLAY_PADDING_ALL(g_uiconfig.padding)
+                    }
+                }) {
+                    CLAY_TEXT(app_state->availableDrives[app_state->selectedDrive], TEXT_MAIN(g_colorscheme.text_primary));
+                }
             }
         }
         
-        // Program title
         UI_ProgramTitle((PanelConfig){
             .title = CLAY_STRING("Disk Analyzer"),
             .bgColor = g_colorscheme.primary,
@@ -332,8 +423,7 @@ void UI_HeaderBar(AppState* app_state) {
 }
 
 void UI_DiagramPanel(PanelConfig config) {
-    CLAY({
-        .id = CLAY_ID("Diagram"),
+    CLAY(CLAY_ID("Diagram"), {
         .layout = {
             .sizing = {
                 .width = CLAY_SIZING_GROW(),
@@ -348,51 +438,37 @@ void UI_DiagramPanel(PanelConfig config) {
 }
 
 void UI_OuterContainer(AppState* app_state) {
-    CLAY({
-        .id = CLAY_ID("OuterContainer"),
+    CLAY(CLAY_ID("OuterContainer"), {
         .layout = {
             .layoutDirection = CLAY_TOP_TO_BOTTOM,
-            .sizing = CLAY_SIZING_GROW(),
+            .sizing = {
+                .width = CLAY_SIZING_GROW(),
+                .height = CLAY_SIZING_GROW()
+            },
         },
         .backgroundColor = g_colorscheme.background,
     }) {
         UI_HeaderBar(app_state);
         
-        UI_FileTable((FileTableConfig){
-            .files = app_state->currentFiles,
-            .fileCount = app_state->fileCount,
+        UI_FileTreeView((FileTreeViewConfig){
+            .tree = &app_state->fileTree,
             .headerBg = g_colorscheme.secondary,
             .headerText = g_colorscheme.text_primary,
             .rowText = g_colorscheme.text_primary,
             .rowHover = g_colorscheme.highlight,
             .rowInactive = g_colorscheme.background,
+            .expandIconColor = g_colorscheme.text_secondary,
             .rowHeight = TABLE_ROW_HEIGHT,
-            .filenameWidth = FIELD_FILENAME_WIDTH,
-            .sizeWidth = FIELD_SIZE_WIDTH,
-            .createdWidth = FIELD_CREATED_AT_WIDTH,
-            .modifiedWidth = FIELD_MODIFIED_AT_WIDTH
+            .nameWidth = FIELD_FILENAME_WIDTH,
+            .sizeWidth = FIELD_SIZE_WIDTH
         });
         
         UI_DiagramPanel((PanelConfig){
-            .title = CLAY_STRING(""), // unused, kept for API consistency
+            .title = CLAY_STRING(""),
             .bgColor = g_colorscheme.primary,
             .textColor = g_colorscheme.text_primary,
             .height = DIAGRAM_MENU_HEIGHT,
             .padding = g_uiconfig.padding
         });
-    }
-}
-
-void UI_RenderUI(AppState* app_state) {
-    Clay_Sizing layoutExpand = {
-        .width = CLAY_SIZING_GROW(),
-        .height = CLAY_SIZING_GROW()
-    };
-
-    // Outer container now delegates everything
-    CLAY({
-        .layout = { .sizing = layoutExpand }
-    }) {
-        UI_OuterContainer(app_state);
     }
 }
