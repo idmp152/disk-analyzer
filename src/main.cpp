@@ -3,7 +3,11 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <FL/Fl.H>
+#include <FL/Fl_Double_Window.H>
+#include <FL/Fl_Box.H>
 #include "arena.hpp"
+#include "ui.hpp"
 
 #define FILE_TREE_BUFFER_CAPACITY 100 * 1024 * 1024
 #define STRING_BUFFER_CAPACITY 80 * 1024 * 1024
@@ -21,16 +25,6 @@ struct FileNode {
 
 uint64_t* is_directory_mask;
 uint64_t* is_expanded_mask;
-
-// Make visible file node array (Use Fl_Table instead of Fl_Tree and in case the user wants a custom sort 
-// (original tree will be sorted by size always so we can construct the treemap) we will just rebuild the "displayed nodes" array)
-struct ViewItem {
-    uint32_t node_idx;
-    uint32_t depth;
-};
-
-std::vector<ViewItem> flat_view;
-
 
 FileNode* file_tree_buffer;
 size_t file_tree_buffer_size = 0;
@@ -106,8 +100,8 @@ void build_flat_view(FileNode* root) {
     //TODO(IlyaBelykh): Build flat view here
 }
 
-int main() {
-    SetConsoleCP(CP_UTF8);
+int main(int argc, char **argv) {
+    SetConsoleOutputCP(CP_UTF8);
 
     file_tree_buffer = (FileNode*)malloc(FILE_TREE_BUFFER_CAPACITY);
     string_buffer = malloc(STRING_BUFFER_CAPACITY);
@@ -122,8 +116,14 @@ int main() {
     std::cout << "Iterating over the tree" << std::endl << std::endl;
     traverse_tree_cout(root, 0);
 
-    
+    Fl_Double_Window *window = new Fl_Double_Window(1280, 800, "Disk Analyzer");
 
+    main_div();
+
+    window->end();
+    window->show(argc, argv);
+
+    Fl::run();
     free(file_tree_buffer);
     free(string_buffer);
     free(is_directory_mask);
