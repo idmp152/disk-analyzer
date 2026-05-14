@@ -1,39 +1,22 @@
-cmake_minimum_required(VERSION 3.27)
-project(disk_analyzer C)
-set(CMAKE_C_STANDARD 99)
+cmake_minimum_required(VERSION 3.15)
+project(DiskAnalyzer)
 
-# Adding Raylib
-include(FetchContent)
-set(FETCHCONTENT_QUIET FALSE)
-set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE) # don't build the supplied examples
-set(BUILD_GAMES    OFF CACHE BOOL "" FORCE) # don't build the supplied example games
+set(FLTK_BUILD_TEST OFF CACHE BOOL "Skip FLTK tests")
+set(FLTK_BUILD_EXAMPLES OFF CACHE BOOL "Skip FLTK examples")
+set(FLTK_BUILD_SHARED_LIBS OFF CACHE BOOL "Build static libs") 
 
-FetchContent_Declare(
-    raylib
-    GIT_REPOSITORY "https://github.com/raysan5/raylib.git"
-    GIT_TAG "5.5"
-    GIT_PROGRESS TRUE
-    GIT_SHALLOW TRUE
-)
 
-FetchContent_MakeAvailable(raylib)
+add_subdirectory(vendor/fltk)
 
-add_executable(disk_analyzer src/main.c src/ui_components.c src/app_state.c src/data.c src/tree_arena.c src/util.c src/file_provider.c)
+add_executable(disk_analyzer src/main.cpp
+                             src/arena.cpp
+                             src/ui.cpp
+                             src/tree_view.cpp)
 
-target_compile_options(disk_analyzer PUBLIC)
-target_include_directories(disk_analyzer PUBLIC src)
+target_include_directories(disk_analyzer PRIVATE include)
+target_link_libraries(disk_analyzer fltk)
 
-target_link_libraries(disk_analyzer PUBLIC raylib)
-
-if(MSVC)
-  set(CMAKE_C_FLAGS_DEBUG "/D CLAY_DEBUG")
-else()
-  set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
-  set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
-endif()
-
-add_custom_command(
-        TARGET disk_analyzer POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_CURRENT_SOURCE_DIR}/resources
-        ${CMAKE_CURRENT_BINARY_DIR}/resources)
+add_compile_options(-Wall -Wextra -Wpedantic)
+# if(WIN32)
+#     set_target_properties(disk_analyzer PROPERTIES WIN32_EXECUTABLE TRUE)
+# endif()
