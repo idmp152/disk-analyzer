@@ -83,7 +83,7 @@ Fl_Flex* stat_section() {
     return pack;
 }
 
-void main_div() {
+Fl_Flex* main_div() {
     Fl::set_font(MAIN_FONT, "Segoe UI");
     Fl::set_font(MAIN_FONT_BOLD, "BSegoe UI");
 
@@ -114,4 +114,6 @@ void main_div() {
     main_layout->fixed(treemap_widget, 400);
 
     main_layout->end();
+
+    return main_layout;
 }

@@ -1,3 +1,4 @@
 #pragma once
+#include <FL/Fl_Flex.H>
 
-void main_div();
+Fl_Flex* main_div();

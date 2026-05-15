@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <FL/Fl.H>
+#include <FL/Fl_Flex.H>
 #include <FL/Fl_Double_Window.H>
 #include <FL/Fl_Box.H>
 #include "arena.hpp"
@@ -118,8 +119,9 @@ int main(int argc, char **argv) {
 
     Fl_Double_Window *window = new Fl_Double_Window(1280, 800, "Disk Analyzer");
 
-    main_div();
+    Fl_Flex* main_container = main_div();
 
+    // window->resizable(main_container); // TODO(IlyaBelykh): Figure out minimal sizes for the window so that it's resized properly
     window->end();
     window->show(argc, argv);
 
