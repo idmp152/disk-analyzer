@@ -1,6 +1,10 @@
 #include "tree_view.hpp"
 #include <FL/fl_draw.H>
 
+//TODO(IlyaBelykh): Align size and percentage on the right so units of measure end up on the same side
+//TODO(IlyaBelykh): For percentage column, in CONTEXT_CELL case render a progressbar instead of just text
+const char* col_headers[COLS] = {"File", "Size", "Percentage of parent size"};
+
 void TreeView::DrawHeader(const char *s, int X, int Y, int W, int H) {
     fl_push_clip(X,Y,W,H);
       fl_draw_box(FL_THIN_UP_BOX, X,Y,W,H, row_header_color());
@@ -9,7 +13,7 @@ void TreeView::DrawHeader(const char *s, int X, int Y, int W, int H) {
     fl_pop_clip();
 }
 
-void TreeView::DrawData(const char *s, int X, int Y, int W, int H) {
+void TreeView::DrawData(const char *s, int X, int Y, int W, int H) { //TODO(IlyaBelykh): rename
     fl_push_clip(X,Y,W,H);
       fl_color(FL_WHITE); fl_rectf(X,Y,W,H);
       fl_color(FL_GRAY0); fl_draw(s, X,Y,W,H, FL_ALIGN_CENTER);
@@ -18,27 +22,12 @@ void TreeView::DrawData(const char *s, int X, int Y, int W, int H) {
 }
 
 void TreeView::draw_cell(TableContext context, int ROW, int COL, int X, int Y, int W, int H) {
-    static char s[40];
     switch ( context ) {
       case CONTEXT_STARTPAGE:
-        fl_font(FL_HELVETICA, 16); //TODO(IlyaBelykh): Replace font by passing one to constructor from UI
+        fl_font(cell_font, cell_font_size);
         return;
       case CONTEXT_COL_HEADER:
-        switch (COL) //TODO(IlyaBelykh): Replace with something like get_col_header
-        {
-          case 0:
-            strcpy(s, "Filename");
-            break;
-          case 1:
-            strcpy(s, "Size"); //TODO(IlyaBelykh): Align size and percentage on the right so units of measure end up on the same side
-            break;
-          case 2:
-            strcpy(s, "Percentage of parent size"); //TODO(IlyaBelykh): For this column, in CONTEXT_CELL case render a progressbar instead of just text
-            break;
-
-        }
-        //sprintf(s,"%c",'A'+COL);
-        DrawHeader(s,X,Y,W,H);
+        DrawHeader(col_headers[COL],X,Y,W,H);
         return;
       case CONTEXT_CELL:
         DrawData("0451",X,Y,W,H);
@@ -60,6 +49,12 @@ void TreeView::resize(int X, int Y, int W, int H) {
       col_width_all(width);
       col_width(cols() - 1, width + remainder);
     }
+}
+
+void TreeView::set_font(Fl_Font font, int font_size) {
+  cell_font = font;
+  cell_font_size = font_size;
+  redraw(); 
 }
 
 TreeView::TreeView(int X, int Y, int W, int H, const char *L) : Fl_Table(X,Y,W,H,L) {

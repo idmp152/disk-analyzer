@@ -103,6 +103,7 @@ void main_div() {
     Fl_Flex* middle_row = new Fl_Flex(0, 0, 0, 0, Fl_Flex::HORIZONTAL);
 
     TreeView* tree_view = new TreeView(0, 0, 0, 0);
+    tree_view->set_font(MAIN_FONT, 16);
 
     middle_row->end();
 
