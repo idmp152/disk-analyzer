@@ -1,7 +1,7 @@
 #include "tree_view.hpp"
 #include <FL/fl_draw.H>
 
-const char* col_headers[COLS] = {"File", "Size", "Percentage of parent size"};
+const char* col_headers[COLS] = {"Name", "Size", "Percentage of parent size"};
 const Fl_Align col_alignments[COLS] = {FL_ALIGN_LEFT, FL_ALIGN_RIGHT, FL_ALIGN_RIGHT}; 
 
 void draw_padded_text(const char *s, int X, int Y, int W, int H, Fl_Align alignment) {
