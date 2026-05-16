@@ -32,6 +32,14 @@ inline void toggle_bit(uint64_t* mask, uint64_t idx) {
     mask[idx >> 6] ^= (1ULL << (idx & 63));
 }
 
+extern uint64_t* is_directory_mask; //TODO(IlyaBelykh): Possibly unite in a context struct, built in main
+extern uint64_t* is_expanded_mask;
+
+extern FileNode* file_tree_buffer;
+extern size_t file_tree_buffer_size;
+
+extern Arena* string_arena;
+
 void provider_init(Arena* string_arena, FileNode* file_tree_buffer, uint64_t* is_directory_mask, uint64_t* is_expanded_mask);
 
 char* utf16_to_utf8(const wchar_t* str);
@@ -41,5 +49,3 @@ void iterate_dir(std::wstring path, FileNode* parent);
 FileNode* add_root_node(const char* path);
 
 void traverse_tree_cout(FileNode* root, unsigned short depth);
-
-void build_flat_view(FileNode* root); 

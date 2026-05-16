@@ -2,13 +2,13 @@
 #include <iostream>
 #include "file_data_provider.hpp"
 
-static uint64_t* is_directory_mask;
-static uint64_t* is_expanded_mask;
+uint64_t* is_directory_mask;
+uint64_t* is_expanded_mask;
 
-static FileNode* file_tree_buffer;
-static size_t file_tree_buffer_size = 0;
+FileNode* file_tree_buffer;
+size_t file_tree_buffer_size = 0;
 
-static Arena* string_arena;
+Arena* string_arena;
 
 void provider_init(Arena* str_arena, FileNode* file_buffer, uint64_t* dir_mask, uint64_t* exp_mask) {
     is_directory_mask = dir_mask;
@@ -47,6 +47,7 @@ void iterate_dir(std::wstring path, FileNode* parent) {
 
             if (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
                 set_bit(is_directory_mask, (uint64_t)(file - file_tree_buffer));
+                set_bit(is_expanded_mask, (uint64_t)(file - file_tree_buffer)); //TODO(IlyaBelykh): Don't expand everything, this is only for testing
                 iterate_dir(path + L"\\" + data.cFileName, file);
             }
         } while (FindNextFileW(hFind, &data));
@@ -57,6 +58,8 @@ void iterate_dir(std::wstring path, FileNode* parent) {
 
 FileNode* add_root_node(const char* path) {
     FileNode* root = &file_tree_buffer[file_tree_buffer_size++];
+    set_bit(is_directory_mask, (uint64_t)(root - file_tree_buffer));
+    set_bit(is_expanded_mask, (uint64_t)(root - file_tree_buffer));
     root->name = path;
     return root;
 }
@@ -69,8 +72,4 @@ void traverse_tree_cout(FileNode* root, unsigned short depth) {
         traverse_tree_cout(curr->first_child, depth + 1);
         curr = curr->next_sibling;
     }
-}
-
-void build_flat_view(FileNode* root) {
-    //TODO(IlyaBelykh): Build flat view here
 }

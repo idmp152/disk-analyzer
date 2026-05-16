@@ -83,7 +83,7 @@ Fl_Flex* stat_section() {
     return pack;
 }
 
-Fl_Flex* main_div() {
+Fl_Flex* main_div(FileNode* root) {
     Fl::set_font(MAIN_FONT, "Segoe UI");
     Fl::set_font(MAIN_FONT_BOLD, "BSegoe UI");
 
@@ -104,6 +104,7 @@ Fl_Flex* main_div() {
 
     TreeView* tree_view = new TreeView(0, 0, 0, 0);
     tree_view->set_font(MAIN_FONT, 16);
+    tree_view->fill_flat_view(root);
 
     middle_row->end();
 

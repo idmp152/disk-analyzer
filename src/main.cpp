@@ -39,7 +39,7 @@ int main(int argc, char **argv) {
 
     Fl_Double_Window *window = new Fl_Double_Window(1280, 800, "Disk Analyzer");
 
-    Fl_Flex* main_container = main_div();
+    Fl_Flex* main_container = main_div(root); //TODO(IlyaBelykh): Transfer file node tree filling to a callback on the "Analyze" button in the UI, passing the root here is just for testing
 
     // window->resizable(main_container); // TODO(IlyaBelykh): Figure out minimal sizes for the window so that it's resized properly
     window->end();
