@@ -23,12 +23,16 @@ class TreeView : public Fl_Table {
 
   std::vector<ViewItem> flat_view; 
 
+  void begin_draw_cell(int X, int Y, int W, int H);
+  void end_draw_cell(int X, int Y, int W, int H);
+
   void draw_header(const char *s, int X, int Y, int W, int H);
-
   void draw_data(const char *s, int X, int Y, int W, int H, Fl_Align alignment);
-
+  void draw_name(const char* s, int X, int Y, int W, int H, int depth, bool is_directory);
   void draw_progressbar(const char* s, int X, int Y, int W, int H, Fl_Align alignment, float value);
-  
+
+  void draw_content_cell(int ROW, int COL, int X, int Y, int W, int H);
+
   void draw_cell(TableContext context, int ROW=0, int COL=0, int X=0, int Y=0, int W=0, int H=0) FL_OVERRIDE;
 
   void resize(int X, int Y, int W, int H) FL_OVERRIDE;
