@@ -37,15 +37,21 @@ int main(int argc, char **argv) {
     std::cout << "Iterating over the tree" << std::endl << std::endl;
     traverse_tree_cout(root, 0);
 
-    Fl_Double_Window *window = new Fl_Double_Window(1280, 800, "Disk Analyzer");
+    Fl::set_font(MAIN_FONT, "Segoe UI");
+    Fl::set_font(MAIN_FONT_BOLD, "BSegoe UI");
+
+    Fl_Double_Window *window = new Fl_Double_Window(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, "Disk Analyzer");
 
     Fl_Flex* main_container = main_div(root); //TODO(IlyaBelykh): Transfer file node tree filling to a callback on the "Analyze" button in the UI, passing the root here is just for testing
 
-    // window->resizable(main_container); // TODO(IlyaBelykh): Figure out minimal sizes for the window so that it's resized properly
+    window->resizable(main_container); // TODO(IlyaBelykh): Figure out minimal sizes for the window so that it's resized properly
+    window->size_range(INFO_CONTAINER_SIZE*2, TOP_ROW_HEIGHT + TREEMAP_WIDGET_SIZE);
     window->end();
     window->show(argc, argv);
 
     Fl::run();
+    
+
     free(file_tree_buffer);
     free(string_buffer);
     free(is_directory_mask);
