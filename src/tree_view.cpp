@@ -1,9 +1,11 @@
-#include "tree_view.hpp"
+#include <math.h>
 #include <FL/fl_draw.H>
 #include <FL/Fl_File_Icon.H>
+#include "tree_view.hpp"
 
 const char* col_headers[COLS] = {"Name", "Size", "Percentage of parent size"};
-const Fl_Align col_alignments[COLS] = {FL_ALIGN_LEFT, FL_ALIGN_RIGHT, FL_ALIGN_RIGHT}; 
+const Fl_Align col_alignments[COLS] = {FL_ALIGN_LEFT, FL_ALIGN_RIGHT, FL_ALIGN_RIGHT};
+const char* available_units[UNIT_SIZE] = {" B", "KB", "MB", "GB", "TB"}; 
 
 void build_flat_view(FileNode* root, std::vector<ViewItem>* flat_view, unsigned short depth) {
     FileNode* curr = root;
@@ -62,23 +64,58 @@ void TreeView::draw_progressbar(const char* s, int X, int Y, int W, int H, Fl_Al
     begin_draw_cell(X, Y, W, H);
 
       fl_color(progressbar_color);
-      fl_rectf(X, Y, W*value/100, H);
+      fl_rectf(X, Y, W*value, H);
 
       draw_padded_text(s, X, Y, W, H, alignment);
 
     end_draw_cell(X, Y, W, H);
 }
 
+void get_size_string(uint64_t size, char* buffer, size_t buf_size) {
+  if (size <= 0) {
+    snprintf(buffer, buf_size, "0 B");
+    return;
+  }
+
+  int unit_idx = (int)(log(size)/log(1024));
+  if (unit_idx >= UNIT_SIZE) unit_idx = UNIT_SIZE - 1; 
+
+  uint64_t divisor = 1ULL << (unit_idx * 10);
+  uint64_t whole_part = size / divisor;
+  uint64_t remainder = size % divisor;
+  double full_size = (double)whole_part + ((double)remainder / divisor); // all of this trickery to not lose precision (double only holds 2^53 mantissa)
+
+  snprintf(buffer, buf_size, "%.1f %s", full_size, available_units[unit_idx]);
+}
+
+double get_size_percent_string(uint64_t size, uint64_t parent_size, char* buffer, size_t buf_size) {
+  double percentage = (double)size/parent_size;
+  snprintf(buffer, buf_size, "%.1f %%", percentage * 100);
+  return percentage;
+}
+
 void TreeView::draw_content_cell(int ROW, int COL, int X, int Y, int W, int H) {
   uint32_t node_idx = flat_view[ROW].node_idx;
   FileNode* node = file_tree_buffer + node_idx;
+  char char_buf[32];
   switch (COL) {
     case 0:
       draw_name(node->name, X, Y, W, H, flat_view[ROW].depth*15, get_bit(is_directory_mask, node_idx));
       break;
-    case 2:
-      draw_progressbar("75.6 %", X, Y, W, H, col_alignments[COL], 75.6);
+    case 1:
+      get_size_string(node->size, char_buf, 32);
+      draw_data(char_buf, X, Y, W, H, col_alignments[COL]);
       break;
+    case 2: {
+      double percentage = 1;
+      if (node->parent) {
+        percentage = get_size_percent_string(node->size, node->parent->size, char_buf, 32);
+      } else {
+        strcpy(char_buf, "100.0 %");
+      }
+      draw_progressbar(char_buf, X, Y, W, H, col_alignments[COL], percentage);
+      break;
+    }
     default:
       draw_data("0451", X, Y, W, H, col_alignments[COL]);
       break;

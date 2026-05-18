@@ -10,6 +10,7 @@
 #define COL_HEADER_HEIGHT 30
 #define COLS 3
 #define CELL_TEXT_PADDING 10
+#define UNIT_SIZE 5
 
 struct ViewItem {
     uint32_t node_idx;
