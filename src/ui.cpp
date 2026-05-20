@@ -10,7 +10,6 @@
 #include <Fl/Fl_Progress.H>
 
 
-
 Fl_Box* add_stat_row(const char* key_label, const char* value_label) {
     Fl_Flex* row = new Fl_Flex(0, 0, 0, TEXT_ROW_HEIGHT);
 

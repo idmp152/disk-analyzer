@@ -47,7 +47,6 @@ void iterate_dir(std::wstring path, FileNode* parent) {
 
             if (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
                 set_bit(is_directory_mask, (uint64_t)(file - file_tree_buffer));
-                set_bit(is_expanded_mask, (uint64_t)(file - file_tree_buffer)); //TODO(IlyaBelykh): Don't expand everything, this is only for testing
                 iterate_dir(path + L"\\" + data.cFileName, file);
             } else {
                 file->size = ((uint64_t)(data.nFileSizeHigh) << 32) | data.nFileSizeLow;

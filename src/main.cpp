@@ -44,7 +44,7 @@ int main(int argc, char **argv) {
 
     Fl_Flex* main_container = main_div(root); //TODO(IlyaBelykh): Transfer file node tree filling to a callback on the "Analyze" button in the UI, passing the root here is just for testing
 
-    window->resizable(main_container); // TODO(IlyaBelykh): Figure out minimal sizes for the window so that it's resized properly
+    window->resizable(main_container);
     window->size_range(INFO_CONTAINER_SIZE*2, TOP_ROW_HEIGHT + TREEMAP_WIDGET_SIZE);
     window->end();
     window->show(argc, argv);
