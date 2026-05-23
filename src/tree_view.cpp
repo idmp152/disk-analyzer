@@ -10,13 +10,45 @@ const char* available_units[UNIT_SIZE] = {" B", "KB", "MB", "GB", "TB"};
 void build_flat_view(FileNode* root, std::vector<ViewItem>* flat_view, unsigned short depth) {
     FileNode* curr = root;
     while (curr) {
-      ViewItem item = {.node_idx = curr - file_tree_buffer, .depth = depth};
+      ViewItem item = {.node_idx = (uint64_t)(curr - file_tree_buffer), .depth = depth};
       flat_view->push_back(item);
       if (get_bit(is_expanded_mask, (uint64_t)(curr - file_tree_buffer)))
         build_flat_view(curr->first_child, flat_view, depth + 1);
       curr = curr->next_sibling;
     }
 }
+
+void draw_padded_text(const char *s, int X, int Y, int W, int H, Fl_Align alignment) {
+  int text_x = X + CELL_TEXT_PADDING;
+  int text_w = W - CELL_TEXT_PADDING*2;
+  fl_color(FL_GRAY0);
+  fl_draw(s, text_x,Y,text_w,H, alignment | FL_ALIGN_INSIDE);
+}
+
+void get_size_string(uint64_t size, char* buffer, size_t buf_size) {
+  if (size <= 0) {
+    snprintf(buffer, buf_size, "0 B");
+    return;
+  }
+
+  int unit_idx = (int)(log(size)/log(1024));
+  if (unit_idx >= UNIT_SIZE) unit_idx = UNIT_SIZE - 1; 
+
+  uint64_t divisor = 1ULL << (unit_idx * 10);
+  uint64_t whole_part = size / divisor;
+  uint64_t remainder = size % divisor;
+  double full_size = (double)whole_part + ((double)remainder / divisor); // all of this trickery to not lose precision (double only holds 2^53 mantissa)
+
+  snprintf(buffer, buf_size, "%.1f %s", full_size, available_units[unit_idx]);
+}
+
+double get_size_percent_string(uint64_t size, uint64_t parent_size, char* buffer, size_t buf_size) {
+  double percentage = (double)size/parent_size;
+  snprintf(buffer, buf_size, "%.1f %%", percentage * 100);
+  return percentage;
+}
+
+// Event handling
 
 void TreeView::handle_events() {
     if (callback_context() != Fl_Table::CONTEXT_CELL) return;
@@ -47,12 +79,7 @@ void TreeView::table_callback(Fl_Widget* w, void* data) {
   tree_view->handle_events();
 }
 
-void draw_padded_text(const char *s, int X, int Y, int W, int H, Fl_Align alignment) {
-  int text_x = X + CELL_TEXT_PADDING;
-  int text_w = W - CELL_TEXT_PADDING*2;
-  fl_color(FL_GRAY0);
-  fl_draw(s, text_x,Y,text_w,H, alignment | FL_ALIGN_INSIDE);
-}
+// Rendering
 
 void TreeView::begin_draw_cell(int X, int Y, int W, int H) {
   fl_push_clip(X,Y,W,H);
@@ -108,29 +135,6 @@ void TreeView::draw_progressbar(const char* s, int X, int Y, int W, int H, Fl_Al
     end_draw_cell(X, Y, W, H);
 }
 
-void get_size_string(uint64_t size, char* buffer, size_t buf_size) {
-  if (size <= 0) {
-    snprintf(buffer, buf_size, "0 B");
-    return;
-  }
-
-  int unit_idx = (int)(log(size)/log(1024));
-  if (unit_idx >= UNIT_SIZE) unit_idx = UNIT_SIZE - 1; 
-
-  uint64_t divisor = 1ULL << (unit_idx * 10);
-  uint64_t whole_part = size / divisor;
-  uint64_t remainder = size % divisor;
-  double full_size = (double)whole_part + ((double)remainder / divisor); // all of this trickery to not lose precision (double only holds 2^53 mantissa)
-
-  snprintf(buffer, buf_size, "%.1f %s", full_size, available_units[unit_idx]);
-}
-
-double get_size_percent_string(uint64_t size, uint64_t parent_size, char* buffer, size_t buf_size) {
-  double percentage = (double)size/parent_size;
-  snprintf(buffer, buf_size, "%.1f %%", percentage * 100);
-  return percentage;
-}
-
 void TreeView::draw_content_cell(int ROW, int COL, int X, int Y, int W, int H) {
   uint32_t node_idx = flat_view[ROW].node_idx;
   FileNode* node = file_tree_buffer + node_idx;
@@ -158,6 +162,8 @@ void TreeView::draw_content_cell(int ROW, int COL, int X, int Y, int W, int H) {
       break;
   }
 }
+
+// FLTK functions
 
 void TreeView::draw_cell(TableContext context, int ROW, int COL, int X, int Y, int W, int H) {
     switch ( context ) {
@@ -189,24 +195,7 @@ void TreeView::resize(int X, int Y, int W, int H) {
     }
 }
 
-void TreeView::set_font(Fl_Font font, int font_size) {
-  cell_font = font;
-  cell_font_size = font_size;
-  redraw(); 
-}
-
-void TreeView::set_progressbar_color(Fl_Color color) {
-  progressbar_color = color;
-  redraw();
-}
-
-void TreeView::fill_flat_view(FileNode* root) {
-  flat_view.clear();
-  root_node = root;
-  build_flat_view(root, &flat_view, 0);
-  rows(flat_view.size());
-  redraw();
-}
+// Public functions
 
 TreeView::TreeView(int X, int Y, int W, int H, const char *L) : Fl_Table(X,Y,W,H,L) {
     callback(table_callback, nullptr);
@@ -221,3 +210,23 @@ TreeView::TreeView(int X, int Y, int W, int H, const char *L) : Fl_Table(X,Y,W,H
     col_resize(0);
     end();
 }
+
+void TreeView::fill_flat_view(FileNode* root) {
+  flat_view.clear();
+  root_node = root;
+  build_flat_view(root, &flat_view, 0);
+  rows(flat_view.size());
+  redraw();
+}
+
+void TreeView::set_progressbar_color(Fl_Color color) {
+  progressbar_color = color;
+  redraw();
+}
+
+void TreeView::set_font(Fl_Font font, int font_size) {
+  cell_font = font;
+  cell_font_size = font_size;
+  redraw(); 
+}
+
