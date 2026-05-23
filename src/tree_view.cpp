@@ -163,6 +163,19 @@ void TreeView::draw_content_cell(int ROW, int COL, int X, int Y, int W, int H) {
   }
 }
 
+// Other
+void TreeView::recalculate_sizes() {
+  recalc_dimensions();
+
+    if (cols() >= 0 && tiw >= 0) {
+      int width = tiw/cols();
+      int remainder = tiw % cols();
+
+      col_width_all(width);
+      col_width(cols() - 1, width + remainder);
+    }
+}
+
 // FLTK functions
 
 void TreeView::draw_cell(TableContext context, int ROW, int COL, int X, int Y, int W, int H) {
@@ -184,15 +197,7 @@ void TreeView::draw_cell(TableContext context, int ROW, int COL, int X, int Y, i
 void TreeView::resize(int X, int Y, int W, int H) {
     Fl_Table::resize(X, Y, W, H);
 
-    recalc_dimensions();
-
-    if (cols() >= 0 && tiw >= 0) {
-      int width = tiw/cols();
-      int remainder = tiw % cols();
-
-      col_width_all(width);
-      col_width(cols() - 1, width + remainder);
-    }
+    recalculate_sizes();
 }
 
 // Public functions
@@ -216,6 +221,7 @@ void TreeView::fill_flat_view(FileNode* root) {
   root_node = root;
   build_flat_view(root, &flat_view, 0);
   rows(flat_view.size());
+  recalculate_sizes();
   redraw();
 }
 
@@ -229,4 +235,3 @@ void TreeView::set_font(Fl_Font font, int font_size) {
   cell_font_size = font_size;
   redraw(); 
 }
-

@@ -58,6 +58,7 @@ private:
   void draw_header(const char *s, int X, int Y, int W, int H);
   void draw_name(const char* s, int X, int Y, int W, int H, int depth, bool is_directory, bool is_expanded);
   void draw_progressbar(const char* s, int X, int Y, int W, int H, Fl_Align alignment, float value);
-};
 
-void build_flat_view(FileNode* root, std::vector<ViewItem>* flat_view, unsigned short depth);
+  // Other
+  void recalculate_sizes();
+};
