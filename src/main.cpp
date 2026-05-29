@@ -17,6 +17,13 @@
 
 void* string_buffer;
 
+void window_callback(Fl_Widget* w, void* data) {
+    if (Fl::callback_reason() == FL_REASON_CANCELLED)
+        return;
+
+    w->hide();    
+}
+
 int main(int argc, char **argv) {
     SetConsoleOutputCP(CP_UTF8);
 
@@ -32,10 +39,10 @@ int main(int argc, char **argv) {
 
     provider_init(&string_arena, file_tree_buffer, is_directory_mask, is_expanded_mask);
 
-    FileNode* root = add_root_node("Soulseek Downloads");
-    iterate_dir(L"C:\\Users\\overwrite\\Documents\\Soulseek Downloads", root);
-    std::cout << "Iterating over the tree" << std::endl << std::endl;
-    traverse_tree_cout(root, 0);
+    FileNode* root = add_root_node("Downloads");
+    iterate_dir(L"C:\\Users\\plart\\Downloads", root);
+    // std::cout << "Iterating over the tree" << std::endl << std::endl;
+    // traverse_tree_cout(root, 0);
 
     Fl::set_font(MAIN_FONT, "Segoe UI");
     Fl::set_font(MAIN_FONT_BOLD, "BSegoe UI");
@@ -48,6 +55,7 @@ int main(int argc, char **argv) {
     window->size_range(INFO_CONTAINER_SIZE*2, TOP_ROW_HEIGHT + TREEMAP_WIDGET_SIZE);
     window->end();
     window->show(argc, argv);
+    window->callback(window_callback);
 
     Fl::run();
     
