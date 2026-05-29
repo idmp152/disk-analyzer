@@ -11,7 +11,7 @@
 
 
 Fl_Box* add_stat_row(const char* key_label, const char* value_label) {
-    Fl_Flex* row = new Fl_Flex(0, 0, 0, TEXT_ROW_HEIGHT);
+    Fl_Flex* row = new Fl_Flex(0, 0, 0, TEXT_ROW_HEIGHT, Fl_Flex::HORIZONTAL);
 
     Fl_Box* key = new Fl_Box(0, 0, 0, TEXT_ROW_HEIGHT, key_label);
     key->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);

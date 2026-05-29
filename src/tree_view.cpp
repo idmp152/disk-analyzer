@@ -5,6 +5,7 @@
 
 const char* col_headers[COLS] = {"Name", "Size", "Percentage of parent size"};
 const Fl_Align col_alignments[COLS] = {FL_ALIGN_LEFT, FL_ALIGN_RIGHT, FL_ALIGN_RIGHT};
+const int col_size_ratios[COLS] = {4, 1, 2}; //  4:1:2 ratio for size, percentage and name is adequate
 const char* available_units[UNIT_SIZE] = {" B", "KB", "MB", "GB", "TB"}; 
 
 void build_flat_view(FileNode* root, std::vector<ViewItem>* flat_view, unsigned short depth) {
@@ -167,13 +168,21 @@ void TreeView::draw_content_cell(int ROW, int COL, int X, int Y, int W, int H) {
 void TreeView::recalculate_sizes() {
   recalc_dimensions();
 
-    if (cols() >= 0 && tiw >= 0) {
-      int width = tiw/cols();
-      int remainder = tiw % cols();
+  if (!(cols() >= 0 && tiw >= 0))
+    return;
 
-      col_width_all(width);
-      col_width(cols() - 1, width + remainder);
-    }
+  int ratio_sum = 0;
+  for (int i = 0; i < cols(); ++i) {
+    ratio_sum += col_size_ratios[i];
+  }
+
+  int size_sum = 0;
+  for (int i = 0; i < cols() - 1; ++i) {
+    int curr_size = tiw*col_size_ratios[i]/ratio_sum;
+    size_sum += curr_size;
+    col_width(i, curr_size);
+  }
+  col_width(cols() - 1, tiw - size_sum);
 }
 
 // FLTK functions
