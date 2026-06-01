@@ -1,5 +1,6 @@
 #include "ui.hpp"
 #include "tree_view.hpp"
+#include "treemap_widget.hpp"
 #include <FL/Fl.H>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Group.H>
@@ -151,9 +152,8 @@ Fl_Flex* main_div(FileNode* root) {
 
     middle_row->end();
 
-    Fl_Box* treemap_widget = new Fl_Box(0, 0, 0, 0); //TODO(IlyaBelykh): Placeholder element has to be replaced with a real widget
-    treemap_widget->box(FL_FLAT_BOX);
-    treemap_widget->color(fl_rgb_color(128, 128, 128));
+    FileTreeMap* treemap_widget = new FileTreeMap(0, 0, 0, 0);
+    treemap_widget->set_root(root);
 
     main_layout->fixed(treemap_widget, TREEMAP_WIDGET_SIZE);
 

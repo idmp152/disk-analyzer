@@ -13,7 +13,8 @@ add_executable(disk_analyzer src/main.cpp
                              src/arena.cpp
                              src/ui.cpp
                              src/tree_view.cpp
-                             src/file_data_provider.cpp)
+                             src/file_data_provider.cpp
+                             src/treemap_widget.cpp)
 
 target_include_directories(disk_analyzer PRIVATE include)
 target_link_libraries(disk_analyzer fltk)
