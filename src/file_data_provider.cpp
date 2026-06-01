@@ -122,17 +122,27 @@ FileNode* merge_sibling_lists(FileNode* a, FileNode* b) {
     if (!a) return b;
     if (!b) return a;
 
-    FileNode* result = nullptr;
+    FileNode dummy;
+    FileNode* tail = &dummy;
 
-    if (a->size >= b->size) {
-        result = a;
-        result->next_sibling = merge_sibling_lists(a->next_sibling, b);
-    } else {
-        result = b;
-        result->next_sibling = merge_sibling_lists(a, b->next_sibling);
+    while (a && b) {
+        if (a->size >= b->size) {
+            tail->next_sibling = a;
+            a = a->next_sibling;
+        } else {
+            tail->next_sibling = b;
+            b = b->next_sibling;
+        }
+        tail = tail->next_sibling;
     }
 
-    return result;
+    if (a) {
+        tail->next_sibling = a;
+    } else {
+        tail->next_sibling = b;
+    }
+
+    return dummy.next_sibling;
 }
 
 FileNode* merge_sort_siblings(FileNode* head) {
@@ -164,6 +174,9 @@ void sort_directory_tree(FileNode* root) {
         root->first_child = merge_sort_siblings(root->first_child);
     }
 
-    sort_directory_tree(root->first_child);
-    sort_directory_tree(root->next_sibling);
+    FileNode* curr = root->first_child;
+    while (curr) {
+        sort_directory_tree(curr); 
+        curr = curr->next_sibling; 
+    }
 }
