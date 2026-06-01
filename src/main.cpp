@@ -41,6 +41,7 @@ int main(int argc, char **argv) {
 
     FileNode* root = add_root_node("Downloads");
     iterate_dir(L"C:\\Users\\overwrite\\Downloads", root);
+    sort_directory_tree(root);
     fill_drive_info();
     // std::cout << "Iterating over the tree" << std::endl << std::endl;
     // traverse_tree_cout(root, 0);

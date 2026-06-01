@@ -57,3 +57,4 @@ void iterate_dir(std::wstring path, FileNode* parent);
 FileNode* add_root_node(const char* path);
 void traverse_tree_cout(FileNode* root, unsigned short depth);
 void fill_drive_info();
+void sort_directory_tree(FileNode* root);

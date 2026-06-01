@@ -117,3 +117,53 @@ void fill_drive_info() {
         drive_letter += wcslen(drive_letter) + 1;
     }
 }
+
+FileNode* merge_sibling_lists(FileNode* a, FileNode* b) {
+    if (!a) return b;
+    if (!b) return a;
+
+    FileNode* result = nullptr;
+
+    if (a->size >= b->size) {
+        result = a;
+        result->next_sibling = merge_sibling_lists(a->next_sibling, b);
+    } else {
+        result = b;
+        result->next_sibling = merge_sibling_lists(a, b->next_sibling);
+    }
+
+    return result;
+}
+
+FileNode* merge_sort_siblings(FileNode* head) {
+    if (!head || !head->next_sibling) {
+        return head;
+    }
+
+    FileNode* slow = head;
+    FileNode* fast = head->next_sibling;
+
+    while (fast && fast->next_sibling) {
+        slow = slow->next_sibling;
+        fast = fast->next_sibling->next_sibling;
+    }
+
+    FileNode* mid = slow->next_sibling;
+    slow->next_sibling = nullptr;
+
+    FileNode* left = merge_sort_siblings(head);
+    FileNode* right = merge_sort_siblings(mid);
+
+    return merge_sibling_lists(left, right);
+}
+
+void sort_directory_tree(FileNode* root) {
+    if (!root) return;
+
+    if (root->first_child) {
+        root->first_child = merge_sort_siblings(root->first_child);
+    }
+
+    sort_directory_tree(root->first_child);
+    sort_directory_tree(root->next_sibling);
+}
