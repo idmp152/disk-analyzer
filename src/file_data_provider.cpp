@@ -1,5 +1,7 @@
 #include <windows.h>
 #include <iostream>
+#include <FL/Fl.H>
+#include <FL/fl_utf8.h>
 #include "file_data_provider.hpp"
 
 uint64_t* is_directory_mask;
@@ -25,15 +27,25 @@ char* utf16_to_utf8(const wchar_t* str) {
     return new_str;
 }
 
-void iterate_dir(std::wstring path, FileNode* parent) {
+void iterate_dir(const char* path, FileNode* parent, ScanContext* ctx) {
+    if (ctx->should_cancel.load()) return;
+
+    std::string search_mask = path;
+    search_mask += "\\*";
+
+    wchar_t w_search_mask[MAX_PATH];
+    fl_utf8towc(search_mask.c_str(), search_mask.size(), w_search_mask, MAX_PATH);
+
     WIN32_FIND_DATAW data;
-    HANDLE hFind = FindFirstFileW((path + L"\\*").c_str(), &data);
+    HANDLE hFind = FindFirstFileW(w_search_mask, &data);
 
     FileNode dummy_node;
     dummy_node.next_sibling = nullptr;
     FileNode* prev_node = &dummy_node;
     if (hFind != INVALID_HANDLE_VALUE) {
         do {
+            if (ctx->should_cancel.load()) break;
+
             if (wcscmp(data.cFileName, L".") == 0 || wcscmp(data.cFileName, L"..") == 0) {
                 continue;
             }
@@ -45,15 +57,23 @@ void iterate_dir(std::wstring path, FileNode* parent) {
             file->parent = parent;
             prev_node->next_sibling = file;
             prev_node = file;
+            ctx->files_scanned++;
 
             if (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+                search_mask = path;
+                search_mask += "\\";
+                search_mask += filename;
                 set_bit(is_directory_mask, (uint64_t)(file - file_tree_buffer));
-                iterate_dir(path + L"\\" + data.cFileName, file);
+                iterate_dir(search_mask.c_str(), file, ctx);
             } else {
                 file->size = ((uint64_t)(data.nFileSizeHigh) << 32) | data.nFileSizeLow;
             }
 
             parent->size += file->size;
+
+            if (ctx->files_scanned % 500 == 0) {
+                Fl::awake(); 
+            }
         } while (FindNextFileW(hFind, &data));
         FindClose(hFind);
         parent->first_child = dummy_node.next_sibling;

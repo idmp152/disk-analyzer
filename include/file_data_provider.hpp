@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <atomic>
 #include "arena.hpp"
 
 #define DEFAULT_ALIGNMENT 16
@@ -24,6 +25,16 @@ struct DriveInfo {
     uint64_t free_size;
 
     bool is_ntfs;
+};
+
+struct ScanContext {
+    const char* start_path;
+    FileNode* root_node;
+
+    std::atomic<uint64_t> files_scanned{0};
+    
+    std::atomic<bool> is_finished{false};
+    std::atomic<bool> should_cancel{false};
 };
 
 inline bool get_bit(uint64_t* mask, uint64_t idx) {
@@ -53,7 +64,7 @@ extern std::vector<DriveInfo> drives;
 
 void provider_init(Arena* string_arena, FileNode* file_tree_buffer, uint64_t* is_directory_mask, uint64_t* is_expanded_mask);
 char* utf16_to_utf8(const wchar_t* str);
-void iterate_dir(std::wstring path, FileNode* parent);
+void iterate_dir(const char* path, FileNode* parent, ScanContext* ctx);
 FileNode* add_root_node(const char* path);
 void traverse_tree_cout(FileNode* root, unsigned short depth);
 void fill_drive_info();

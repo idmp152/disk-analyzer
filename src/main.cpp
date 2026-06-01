@@ -21,11 +21,22 @@ void window_callback(Fl_Widget* w, void* data) {
     if (Fl::callback_reason() == FL_REASON_CANCELLED)
         return;
 
+    if (g_ui_state.is_scanning && g_ui_state.current_ctx) {
+        g_ui_state.current_ctx->should_cancel = true;
+        
+        if (g_ui_state.scan_thread.joinable()) {
+            g_ui_state.scan_thread.join(); 
+        }
+        
+        delete g_ui_state.current_ctx;
+    }
+
     w->hide();    
 }
 
-int main(int argc, char **argv) {
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
     SetConsoleOutputCP(CP_UTF8);
+    Fl::get_system_colors();
 
     FileNode* file_tree_buffer = (FileNode*)malloc(FILE_TREE_BUFFER_CAPACITY);
 
@@ -38,30 +49,22 @@ int main(int argc, char **argv) {
     uint64_t* is_expanded_mask = (uint64_t*)calloc(1, mask_bytes);
 
     provider_init(&string_arena, file_tree_buffer, is_directory_mask, is_expanded_mask);
-
-    FileNode* root = add_root_node("C:\\");
-    //iterate_dir(L"C:\\Users\\overwrite\\Documents\\Soulseek Downloads\\complete", root);
-    iterate_dir(L"C:\\", root);
-    sort_directory_tree(root);
     fill_drive_info();
-    // std::cout << "Iterating over the tree" << std::endl << std::endl;
-    // traverse_tree_cout(root, 0);
 
     Fl::set_font(MAIN_FONT, "Segoe UI");
     Fl::set_font(MAIN_FONT_BOLD, "BSegoe UI");
 
     Fl_Double_Window *window = new Fl_Double_Window(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, "Disk Analyzer");
 
-    Fl_Flex* main_container = main_div(root); //TODO(IlyaBelykh): Transfer file node tree filling to a callback on the "Analyze" button in the UI, passing the root here is just for testing
+    Fl_Flex* main_container = main_div();
 
     window->resizable(main_container);
     window->size_range(INFO_CONTAINER_SIZE*2, TOP_ROW_HEIGHT + TREEMAP_WIDGET_SIZE);
     window->end();
-    window->show(argc, argv);
+    window->show();
     window->callback(window_callback);
 
     Fl::run();
-    
 
     free(file_tree_buffer);
     free(string_buffer);

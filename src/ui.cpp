@@ -1,6 +1,7 @@
 #include "ui.hpp"
 #include "tree_view.hpp"
 #include "treemap_widget.hpp"
+#include <math.h>
 #include <FL/Fl.H>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Group.H>
@@ -72,6 +73,63 @@ void drive_choice_cb(Fl_Widget* widget, void* data) {
     update_stat_labels(selected_idx);
 }
 
+void update_ui_timer_cb(void* data) {
+    ScanContext* ctx = (ScanContext*)(data);
+
+    if (ctx->is_finished.load()) {
+        g_ui_state.progress_bar->value(100.0);
+        g_ui_state.progress_bar->redraw();
+
+        if (g_ui_state.scan_thread.joinable()) {
+            g_ui_state.scan_thread.join(); 
+        }
+
+        g_ui_state.tree_view->fill_flat_view(ctx->root_node);
+        g_ui_state.tree_map->set_root(ctx->root_node);
+
+        g_ui_state.is_scanning = false;
+        g_ui_state.current_ctx = nullptr;
+        delete ctx;
+        return; 
+    } else {
+        const double P = 0.4;
+        const double K = 100.0;
+
+        double N_pow = std::pow(static_cast<double>(ctx->files_scanned.load()), P);
+        double progress_val = 100.0 * (N_pow / (N_pow + K));
+
+        g_ui_state.progress_bar->value(progress_val);
+        g_ui_state.progress_bar->redraw();
+    }
+
+    Fl::repeat_timeout(0.03, update_ui_timer_cb, ctx);
+}
+
+void background_scan_worker(ScanContext* ctx) {
+    iterate_dir(ctx->start_path, ctx->root_node, ctx);
+    sort_directory_tree(ctx->root_node);
+    ctx->is_finished = true;
+    Fl::awake();
+}
+
+void analyze_button_cb(Fl_Widget* widget, void* data) {
+    if (g_ui_state.is_scanning) return;
+
+    int idx = g_ui_state.drive_choice->value();
+    const char* path = drives[idx].name;
+
+    ScanContext* ctx = new ScanContext();
+    ctx->start_path = path;
+    
+    ctx->root_node = add_root_node(path);
+
+    g_ui_state.current_ctx = ctx;
+    g_ui_state.is_scanning = true;
+    g_ui_state.scan_thread = std::thread(background_scan_worker, ctx);
+
+    Fl::add_timeout(0.03, update_ui_timer_cb, ctx);
+}
+
 Fl_Flex* analyze_section() {
     Fl_Flex* pack = new Fl_Flex(0, 0, 0, 0, Fl_Flex::VERTICAL);
     pack->margin(MARGIN);
@@ -98,17 +156,19 @@ Fl_Flex* analyze_section() {
     analyze->labelfont(MAIN_FONT);
     analyze->box(FL_THIN_UP_BOX);
     analyze->visible_focus(0);
+    analyze->callback(analyze_button_cb);
 
     row->end();
 
     flex_spacer(pack, ANALYZER_SECTION_ROW_GAP);
 
     Fl_Progress* progress_bar = new Fl_Progress(0, 0, 0, 0);
+    g_ui_state.progress_bar = progress_bar;
     progress_bar->box(FL_BORDER_BOX);
     progress_bar->color(FL_WHITE, PROGRESSBAR_COLOR);
     progress_bar->minimum(0.);
     progress_bar->maximum(100.);
-    progress_bar->value(66.7);
+    progress_bar->value(0.);
 
     pack->end();
     return pack;
@@ -130,7 +190,7 @@ Fl_Flex* stat_section() {
     return pack;
 }
 
-Fl_Flex* main_div(FileNode* root) {
+Fl_Flex* main_div() {
     Fl_Flex* main_layout = new Fl_Flex(0, 0, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, Fl_Flex::VERTICAL);
     Fl_Flex* top_row = new Fl_Flex(0, 0, 0, 0, Fl_Flex::HORIZONTAL);
 
@@ -148,12 +208,12 @@ Fl_Flex* main_div(FileNode* root) {
 
     TreeView* tree_view = new TreeView(0, 0, 0, 0);
     tree_view->set_font(MAIN_FONT, FONT_SIZE);
-    tree_view->fill_flat_view(root);
+    g_ui_state.tree_view = tree_view;
 
     middle_row->end();
 
     FileTreeMap* treemap_widget = new FileTreeMap(0, 0, 0, 0);
-    treemap_widget->set_root(root);
+    g_ui_state.tree_map = treemap_widget;
 
     main_layout->fixed(treemap_widget, TREEMAP_WIDGET_SIZE);
 
