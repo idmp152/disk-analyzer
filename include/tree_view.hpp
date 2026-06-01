@@ -62,3 +62,6 @@ private:
   // Other
   void recalculate_sizes();
 };
+
+void get_size_string(uint64_t size, char* buffer, size_t buf_size);
+double get_size_percent_string(uint64_t size, uint64_t parent_size, char* buffer, size_t buf_size);

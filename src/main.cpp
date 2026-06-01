@@ -40,7 +40,8 @@ int main(int argc, char **argv) {
     provider_init(&string_arena, file_tree_buffer, is_directory_mask, is_expanded_mask);
 
     FileNode* root = add_root_node("Downloads");
-    iterate_dir(L"C:\\Users\\plart\\Downloads", root);
+    iterate_dir(L"C:\\Users\\overwrite\\Downloads", root);
+    fill_drive_info();
     // std::cout << "Iterating over the tree" << std::endl << std::endl;
     // traverse_tree_cout(root, 0);
 

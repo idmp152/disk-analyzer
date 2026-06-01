@@ -1,6 +1,8 @@
 #pragma once
 
 #include <FL/Fl_Flex.H>
+#include <FL/Fl_Choice.H>
+#include <FL/Fl_Box.H>
 #include "file_data_provider.hpp"
 
 #define MAIN_FONT 16
@@ -21,5 +23,12 @@
 
 #define PROGRESSBAR_COLOR 0x5ced7300
 
+struct UIState {
+    Fl_Choice* drive_choice = nullptr;
+    Fl_Box* val_selected    = nullptr;
+    Fl_Box* val_total       = nullptr;
+    Fl_Box* val_used        = nullptr;
+    Fl_Box* val_free        = nullptr;
+};
 
 Fl_Flex* main_div(FileNode* root);

@@ -9,6 +9,7 @@
 #include <FL/Fl_Button.H>
 #include <Fl/Fl_Progress.H>
 
+UIState g_ui_state;
 
 Fl_Box* add_stat_row(const char* key_label, const char* value_label) {
     Fl_Flex* row = new Fl_Flex(0, 0, 0, TEXT_ROW_HEIGHT, Fl_Flex::HORIZONTAL);
@@ -30,6 +31,46 @@ void flex_spacer(Fl_Flex* flex_element, int size) {
     flex_element->fixed(spacer, size);
 } 
 
+void update_stat_labels(int drive_idx) {
+    if (drive_idx < 0 || drive_idx >= (int)drives.size()) return;
+    const DriveInfo& drive = drives[drive_idx];
+
+    uint64_t used_bytes = drive.total_size - drive.free_size;
+
+    static char buf_total[32];
+    static char buf_used[64];
+    static char buf_free[64];
+    char size_part[32];
+    char percent_part[32];
+
+    g_ui_state.val_selected->label(drive.name);
+
+    get_size_string(drive.total_size, buf_total, 32);
+    g_ui_state.val_total->label(buf_total);
+
+    get_size_string(used_bytes, size_part, 32);
+    get_size_percent_string(used_bytes, drive.total_size, percent_part, 32);
+    snprintf(buf_used, 64, "%s (%s)", size_part, percent_part);
+    g_ui_state.val_used->label(buf_used);
+
+    get_size_string(drive.free_size, size_part, 32);
+    get_size_percent_string(drive.free_size, drive.total_size, percent_part, 32);
+    snprintf(buf_free, 64, "%s (%s)", size_part, percent_part);
+    g_ui_state.val_free->label(buf_free);
+
+    g_ui_state.val_selected->redraw();
+    g_ui_state.val_total->redraw();
+    g_ui_state.val_used->redraw();
+    g_ui_state.val_free->redraw();
+}
+
+void drive_choice_cb(Fl_Widget* widget, void* data) {
+    Fl_Choice* choice = (Fl_Choice*)(widget);
+    
+    int selected_idx = choice->value();
+    update_stat_labels(selected_idx);
+}
+
 Fl_Flex* analyze_section() {
     Fl_Flex* pack = new Fl_Flex(0, 0, 0, 0, Fl_Flex::VERTICAL);
     pack->margin(MARGIN);
@@ -41,12 +82,14 @@ Fl_Flex* analyze_section() {
     choice_label->labelfont(MAIN_FONT);
 
     Fl_Choice* choice = new Fl_Choice(0, 0, 0, 0);
+    g_ui_state.drive_choice = choice;
     choice->textfont(MAIN_FONT);
-    choice->add("Drive C:");
-    choice->add("Drive D:");
-    choice->add("Drive E:");
+    for (const DriveInfo& drive : drives) {
+        choice->add(drive.name);
+    }
     choice->value(0);
     choice->visible_focus(0);
+    choice->callback(drive_choice_cb);
 
     flex_spacer(row, MARGIN);
 
@@ -73,11 +116,16 @@ Fl_Flex* analyze_section() {
 Fl_Flex* stat_section() {
     Fl_Flex* pack = new Fl_Flex(0, 0, 0, 0);
     pack->margin(MARGIN);
-    add_stat_row("Selected: ", "Drive C:");
-    add_stat_row("Total Volume: ", "930.7 GB");
-    add_stat_row("Used: ", "264.3 GB (28.4 %)");
-    add_stat_row("Free: ", "666.4 GB (71.6 %)");
+    g_ui_state.val_selected = add_stat_row("Selected: ", "");
+    g_ui_state.val_total = add_stat_row("Total Volume: ", "");
+    g_ui_state.val_used = add_stat_row("Used: ", "");
+    g_ui_state.val_free = add_stat_row("Free: ", "");
     pack->end();
+
+    if (!drives.empty()) {
+        update_stat_labels(0);
+    }
+
     return pack;
 }
 

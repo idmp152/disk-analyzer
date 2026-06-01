@@ -9,6 +9,7 @@ FileNode* file_tree_buffer;
 size_t file_tree_buffer_size = 0;
 
 Arena* string_arena;
+std::vector<DriveInfo> drives;
 
 void provider_init(Arena* str_arena, FileNode* file_buffer, uint64_t* dir_mask, uint64_t* exp_mask) {
     is_directory_mask = dir_mask;
@@ -74,5 +75,45 @@ void traverse_tree_cout(FileNode* root, unsigned short depth) {
         std::cout << padding << (get_bit(is_directory_mask, (uint64_t)(curr - file_tree_buffer)) ? "- " : "> ") << curr->name << std::endl;
         traverse_tree_cout(curr->first_child, depth + 1);
         curr = curr->next_sibling;
+    }
+}
+
+void fill_drive_info() {
+    WCHAR buffer[254];
+    DWORD size = GetLogicalDriveStringsW(254, buffer);
+
+    if (size == 0 || size > 254) return;
+    WCHAR* drive_letter = buffer;
+
+    while (*drive_letter != L'\0') {
+        UINT type = GetDriveTypeW(drive_letter);
+        
+        if (type == DRIVE_UNKNOWN || type == DRIVE_NO_ROOT_DIR || type == DRIVE_CDROM) {
+            drive_letter += wcslen(drive_letter) + 1;
+            continue; 
+        }
+
+        DriveInfo info;
+        info.name = utf16_to_utf8(drive_letter);
+        info.is_ntfs = false;
+
+        info.total_size = 0;
+        info.free_size = 0;
+
+        WCHAR fs_name[MAX_PATH] = L"";
+        
+        if (GetVolumeInformationW(drive_letter, nullptr, 0, nullptr, nullptr, nullptr, fs_name, MAX_PATH)) {
+            info.is_ntfs = (wcscmp(fs_name, L"NTFS") == 0);
+        }
+
+        ULARGE_INTEGER freeBytesAvailable, totalNumberOfBytes, totalNumberOfFreeBytes;
+        
+        if (GetDiskFreeSpaceExW(drive_letter, &freeBytesAvailable, &totalNumberOfBytes, &totalNumberOfFreeBytes)) {
+            info.total_size = totalNumberOfBytes.QuadPart;
+            info.free_size = totalNumberOfFreeBytes.QuadPart;
+        }
+
+        drives.push_back(info);
+        drive_letter += wcslen(drive_letter) + 1;
     }
 }
