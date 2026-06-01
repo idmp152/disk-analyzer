@@ -1,6 +1,9 @@
 #include <Fl/fl_draw.H>
+#include <FL/Fl_Tooltip.H>
 #include <cmath>
 #include <algorithm>
+#include <iostream>
+#include "tree_view.hpp"
 #include "treemap_widget.hpp"
 
 FileTreeMap::FileTreeMap(int X, int Y, int W, int H, const char* L) : Fl_Widget(X, Y, W, H, L) {}
@@ -10,13 +13,13 @@ void FileTreeMap::set_root(FileNode* root) {
     redraw();
 }
 
-void draw_slice_and_dice(int x, int y, int w, int h, bool vertical, FileNode* root) {
+void FileTreeMap::draw_slice_and_dice(int x, int y, int w, int h, bool vertical, FileNode* root) {
     if (w <= 3 || h <= 3 || !root || !root->first_child) return;
 
     FileNode* curr = root->first_child;
     uint64_t parent_size = root->size;
     
-    const int PIXEL_THRESHOLD = 6; 
+    const int PIXEL_THRESHOLD = 5; 
     uint64_t others_combined_size = 0;
     uint64_t accumulated_size = 0;
 
@@ -48,6 +51,10 @@ void draw_slice_and_dice(int x, int y, int w, int h, bool vertical, FileNode* ro
 
             if (current_h > 0) {
                 fl_rect(x, start_y, w + 1, current_h + 1);
+
+                if (!curr->first_child) {
+                    visual_elements.push_back({ x, start_y, w, current_h, curr });
+                }
             }
 
             draw_slice_and_dice(x, start_y, w, current_h, !vertical, curr);
@@ -58,6 +65,10 @@ void draw_slice_and_dice(int x, int y, int w, int h, bool vertical, FileNode* ro
 
             if (current_w > 0) {
                 fl_rect(start_x, y, current_w + 1, h + 1);
+
+                if (!curr->first_child) {
+                    visual_elements.push_back({ start_x, y, current_w, h, curr });
+                }
             }
 
             draw_slice_and_dice(start_x, y, current_w, h, !vertical, curr);
@@ -79,7 +90,13 @@ void draw_slice_and_dice(int x, int y, int w, int h, bool vertical, FileNode* ro
             int current_h = end_y - start_y;
 
             if (current_h > 0) {
+                fl_color(small_file_color);
+                fl_rectf(x, start_y, w + 1, current_h + 1);
+
+                fl_color(FL_BLACK);
                 fl_rect(x, start_y, w + 1, current_h + 1);
+
+                visual_elements.push_back({ x, start_y, w, current_h, nullptr });
             }
         } else {
             int start_x = x + std::round(w * start_fraction);
@@ -87,19 +104,139 @@ void draw_slice_and_dice(int x, int y, int w, int h, bool vertical, FileNode* ro
             int current_w = end_x - start_x;
 
             if (current_w > 0) {
+                fl_color(small_file_color);
+                fl_rectf(start_x, y, current_w + 1, h + 1);
+
+                fl_color(FL_BLACK);
                 fl_rect(start_x, y, current_w + 1, h + 1);
+
+                visual_elements.push_back({ start_x, y, current_w, h, nullptr });
             }
         }
     }
 }
 
+void get_full_path(FileNode* node, char* buffer, size_t buf_size) {
+    if (!buffer || buf_size == 0) return;
+    
+    buffer[0] = '\0';
+    if (!node) return;
+
+    size_t current_pos = buf_size - 1; 
+    buffer[current_pos] = '\0';
+
+    FileNode* curr = node;
+    bool is_first = true;
+
+    while (curr) {
+        if (!curr->name) {
+            curr = curr->parent;
+            continue;
+        }
+
+        size_t name_len = strlen(curr->name);
+        
+        if (!is_first && curr->name[name_len - 1] != '\\' && curr->name[name_len - 1] != '/') {
+            if (current_pos >= 1) {
+                current_pos--;
+                buffer[current_pos] = '\\';
+            }
+        }
+        
+        if (current_pos >= name_len) {
+            current_pos -= name_len;
+            memcpy(&buffer[current_pos], curr->name, name_len);
+        } else {
+            break; 
+        }
+        
+        is_first = false;
+        
+        curr = curr->parent;
+    }
+
+    if (current_pos > 0 && current_pos < buf_size) {
+        size_t string_len = buf_size - current_pos;
+        memmove(buffer, &buffer[current_pos], string_len);
+    }
+}
+
+int FileTreeMap::handle(int event) {
+    if (event == FL_LEAVE) {
+        hovered_node = nullptr;
+        is_hovered_others = false;
+        tooltip(nullptr);
+        Fl_Tooltip::enter(nullptr);
+        return 1;
+    }
+
+    if (!(event == FL_MOVE || event == FL_ENTER)) {
+        return Fl_Widget::handle(event);
+    }
+
+
+    int mx = Fl::event_x();
+    int my = Fl::event_y();
+    
+    FileNode* found_node = nullptr;
+    bool found_others = false;
+    bool inside_any_element = false;
+
+    for (const auto& el : visual_elements) {
+        if (mx >= el.x && mx < el.x + el.w &&
+            my >= el.y && my < el.y + el.h) {
+            
+            inside_any_element = true;
+            if (el.node == nullptr) {
+                found_others = true;
+            } else {
+                found_node = el.node;
+            }
+            break;
+        }
+    }
+
+    if (found_node != hovered_node || found_others != is_hovered_others) {
+        hovered_node = found_node;
+        is_hovered_others = found_others;
+        
+        if (inside_any_element) {
+            static char tooltip_buf[256]; 
+            
+            if (is_hovered_others) {
+                snprintf(tooltip_buf, sizeof(tooltip_buf), "Small files");
+            } else if (hovered_node && hovered_node->name) {
+                char size_buf[32];
+                char name_buf[128];
+                get_size_string(hovered_node->size, size_buf, 32);
+                get_full_path(hovered_node, name_buf, 128);
+                snprintf(tooltip_buf, sizeof(tooltip_buf), "%s (%s)", name_buf, size_buf);
+            }
+
+            tooltip(tooltip_buf); 
+
+            Fl_Tooltip::enter(nullptr); 
+            Fl_Tooltip::enter(this); 
+        } else {
+            tooltip(nullptr);
+            Fl_Tooltip::enter(nullptr);
+        }
+    }
+    return 1; 
+}
+
 void FileTreeMap::draw() {
-    fl_color(fl_rgb_color(173, 216, 230));
+    fl_color(main_color);
     fl_rectf(x(), y(), w(), h());
 
     if (!root_node || root_node->size == 0) return;
     
     fl_color(FL_BLACK);
+    fl_line_style(FL_SOLID, 1);
+
+    visual_elements.clear(); 
+    hovered_node = nullptr;
+    is_hovered_others = false;
 
     draw_slice_and_dice(x(), y(), w(), h(), false, root_node);
 }
