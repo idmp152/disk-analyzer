@@ -185,14 +185,14 @@ void FileTreeMap::draw() {
     fl_color(main_color);
     fl_rectf(x(), y(), w(), h());
 
+    visual_elements.clear(); 
+    hovered_node = nullptr;
+    is_hovered_others = false;
+
     if (!root_node || root_node->size == 0) return;
     
     fl_color(FL_BLACK);
     fl_line_style(FL_SOLID, 1);
-
-    visual_elements.clear(); 
-    hovered_node = nullptr;
-    is_hovered_others = false;
 
     draw_slice_and_dice(x(), y(), w(), h(), false, root_node);
 }

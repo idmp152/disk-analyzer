@@ -153,7 +153,9 @@ void fill_drive_info() {
         }
 
         DriveInfo info;
-        info.name = utf16_to_utf8(drive_letter);
+        char name_copy_buf[256];
+        fl_utf8fromwc(name_copy_buf, 256, drive_letter, wcslen(drive_letter) + 1);
+        info.name = name_copy_buf; //TODO(IlyaBelykh): Look at this, since utf16_to_utf8 stores the new string into the string arena
         info.is_ntfs = false;
 
         info.total_size = 0;

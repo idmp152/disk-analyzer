@@ -50,7 +50,7 @@ void update_stat_labels(int drive_idx) {
     char size_part[32];
     char percent_part[32];
 
-    g_ui_state.val_selected->label(drive.name);
+    g_ui_state.val_selected->label(drive.name.c_str());
 
     get_size_string(drive.total_size, buf_total, 32);
     g_ui_state.val_total->label(buf_total);
@@ -101,7 +101,7 @@ void update_ui_timer_cb(void* data) {
         const double P = 0.4;
         const double K = 100.0;
 
-        double N_pow = std::pow(static_cast<double>(ctx->files_scanned.load()), P);
+        double N_pow = std::pow((double)(ctx->files_scanned.load()), P);
         double progress_val = 100.0 * (N_pow / (N_pow + K));
 
         g_ui_state.progress_bar->value(progress_val);
@@ -122,12 +122,46 @@ void analyze_button_cb(Fl_Widget* widget, void* data) {
     if (g_ui_state.is_scanning) return;
 
     int idx = g_ui_state.drive_choice->value();
-    const char* path = drives[idx].name;
+    
+    std::string path_to_scan; 
+
+    if (idx == drives.size()) {
+        Fl_Native_File_Chooser fnfc;
+        fnfc.title("Choose a directory");
+        fnfc.type(Fl_Native_File_Chooser::BROWSE_DIRECTORY);
+
+        if (fnfc.show() != 0) return;
+        path_to_scan = fnfc.filename();
+    } else {
+        path_to_scan = drives[idx].name; 
+    }
+
+    if (path_to_scan.empty()) return;
+
+    if (file_tree_buffer_size > 0) {
+        memset(file_tree_buffer, 0, file_tree_buffer_size * sizeof(FileNode));
+
+        size_t used_words = (file_tree_buffer_size >> 6) + 1;
+        size_t bytes_to_clear = used_words * sizeof(uint64_t);
+
+        memset(is_directory_mask, 0, bytes_to_clear);
+        memset(is_expanded_mask, 0, bytes_to_clear);
+    }
+    file_tree_buffer_size = 0;
+    arena_free_all(string_arena);
+    g_ui_state.root = nullptr;
+    g_ui_state.tree_map->set_root(nullptr);
+    g_ui_state.tree_view->fill_flat_view(nullptr);
+
+    size_t bytes_needed = path_to_scan.size() + 1;
+    char* arena_path = (char*)arena_alloc_align(string_arena, bytes_needed, DEFAULT_ALIGNMENT);
+    if (!arena_path) return;
+    
+    memcpy(arena_path, path_to_scan.c_str(), bytes_needed);
 
     ScanContext* ctx = new ScanContext();
-    ctx->start_path = path;
-    
-    ctx->root_node = add_root_node(path);
+    ctx->start_path = arena_path;
+    ctx->root_node = add_root_node(ctx->start_path);
 
     g_ui_state.current_ctx = ctx;
     g_ui_state.is_scanning = true;
@@ -150,8 +184,9 @@ Fl_Flex* analyze_section() {
     g_ui_state.drive_choice = choice;
     choice->textfont(MAIN_FONT);
     for (const DriveInfo& drive : drives) {
-        choice->add(drive.name);
+        choice->add(drive.name.c_str());
     }
+    choice->add("<Select folder>");
     choice->value(0);
     choice->visible_focus(0);
     choice->callback(drive_choice_cb);
@@ -200,6 +235,7 @@ void export_txt_cb(Fl_Widget* w, void* data) {
     Fl_Native_File_Chooser file_chooser(Fl_Native_File_Chooser::BROWSE_SAVE_FILE);
     
     file_chooser.title("Export Analysis Results");
+    file_chooser.preset_file("export.txt");
     file_chooser.filter("Text Files\t*.txt");
     
     file_chooser.options(Fl_Native_File_Chooser::SAVEAS_CONFIRM);
@@ -227,6 +263,7 @@ void export_csv_cb(Fl_Widget* w, void* data) { //TODO(IlyaBelykh): refactor to a
     Fl_Native_File_Chooser file_chooser(Fl_Native_File_Chooser::BROWSE_SAVE_FILE);
     
     file_chooser.title("Export Analysis Results");
+    file_chooser.preset_file("export.csv");
     file_chooser.filter("Comma-Separated Values\t*.csv");
     
     file_chooser.options(Fl_Native_File_Chooser::SAVEAS_CONFIRM);

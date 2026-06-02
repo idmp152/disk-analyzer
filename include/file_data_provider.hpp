@@ -20,7 +20,7 @@ struct alignas(64) FileNode {
 };
 
 struct DriveInfo {
-    const char* name;
+    std::string name;
 
     uint64_t total_size;
     uint64_t free_size;
