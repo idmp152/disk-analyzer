@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <atomic>
+#include <iostream>
 #include "arena.hpp"
 
 #define DEFAULT_ALIGNMENT 16
@@ -66,6 +67,7 @@ void provider_init(Arena* string_arena, FileNode* file_tree_buffer, uint64_t* is
 char* utf16_to_utf8(const wchar_t* str);
 void iterate_dir(const char* path, FileNode* parent, ScanContext* ctx);
 FileNode* add_root_node(const char* path);
-void traverse_tree_cout(FileNode* root, unsigned short depth);
+void traverse_tree_out(FileNode* root, unsigned short depth, std::ostream& stream = std::cout);
+void traverse_tree_csv(FileNode* root, unsigned short depth, std::ostream& stream = std::cout);
 void fill_drive_info();
 void sort_directory_tree(FileNode* root);

@@ -5,6 +5,7 @@
 #include <iostream>
 #include "tree_view.hpp"
 #include "treemap_widget.hpp"
+#include "formats.hpp"
 
 FileTreeMap::FileTreeMap(int X, int Y, int W, int H, const char* L) : Fl_Widget(X, Y, W, H, L) {}
 
@@ -113,51 +114,6 @@ void FileTreeMap::draw_slice_and_dice(int x, int y, int w, int h, bool vertical,
                 visual_elements.push_back({ start_x, y, current_w, h, nullptr });
             }
         }
-    }
-}
-
-void get_full_path(FileNode* node, char* buffer, size_t buf_size) {
-    if (!buffer || buf_size == 0) return;
-    
-    buffer[0] = '\0';
-    if (!node) return;
-
-    size_t current_pos = buf_size - 1; 
-    buffer[current_pos] = '\0';
-
-    FileNode* curr = node;
-    bool is_first = true;
-
-    while (curr) {
-        if (!curr->name) {
-            curr = curr->parent;
-            continue;
-        }
-
-        size_t name_len = strlen(curr->name);
-        
-        if (!is_first && curr->name[name_len - 1] != '\\' && curr->name[name_len - 1] != '/') {
-            if (current_pos >= 1) {
-                current_pos--;
-                buffer[current_pos] = '\\';
-            }
-        }
-        
-        if (current_pos >= name_len) {
-            current_pos -= name_len;
-            memcpy(&buffer[current_pos], curr->name, name_len);
-        } else {
-            break; 
-        }
-        
-        is_first = false;
-        
-        curr = curr->parent;
-    }
-
-    if (current_pos > 0 && current_pos < buf_size) {
-        size_t string_len = buf_size - current_pos;
-        memmove(buffer, &buffer[current_pos], string_len);
     }
 }
 

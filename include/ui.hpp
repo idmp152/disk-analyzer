@@ -16,6 +16,7 @@
 #define TOP_ROW_HEIGHT 100
 #define INFO_CONTAINER_SIZE 500 
 #define TREEMAP_WIDGET_SIZE 400
+#define MENU_BAR_SIZE 25
 
 #define DEFAULT_WINDOW_WIDTH 1000
 #define DEFAULT_WINDOW_HEIGHT 700
@@ -40,6 +41,7 @@ struct UIState {
     std::thread scan_thread;
     ScanContext* current_ctx = nullptr; 
     bool is_scanning = false;
+    FileNode* root = nullptr;
 };
 
 extern UIState g_ui_state;

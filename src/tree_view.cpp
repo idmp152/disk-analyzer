@@ -1,12 +1,12 @@
 #include <math.h>
 #include <FL/fl_draw.H>
 #include <FL/Fl_File_Icon.H>
+#include "formats.hpp"
 #include "tree_view.hpp"
 
 const char* col_headers[COLS] = {"Name", "Size", "Percentage of parent size"};
 const Fl_Align col_alignments[COLS] = {FL_ALIGN_LEFT, FL_ALIGN_RIGHT, FL_ALIGN_RIGHT};
 const int col_size_ratios[COLS] = {4, 1, 2}; //  4:1:2 ratio for size, percentage and name is adequate
-const char* available_units[UNIT_SIZE] = {" B", "KB", "MB", "GB", "TB"}; 
 
 void build_flat_view(FileNode* root, std::vector<ViewItem>* flat_view, unsigned short depth) {
     FileNode* curr = root;
@@ -24,29 +24,6 @@ void draw_padded_text(const char *s, int X, int Y, int W, int H, Fl_Align alignm
   int text_w = W - CELL_TEXT_PADDING*2;
   fl_color(FL_GRAY0);
   fl_draw(s, text_x,Y,text_w,H, alignment | FL_ALIGN_INSIDE);
-}
-
-void get_size_string(uint64_t size, char* buffer, size_t buf_size) {
-  if (size <= 0) {
-    snprintf(buffer, buf_size, "0 B");
-    return;
-  }
-
-  int unit_idx = (int)(log(size)/log(1024));
-  if (unit_idx >= UNIT_SIZE) unit_idx = UNIT_SIZE - 1; 
-
-  uint64_t divisor = 1ULL << (unit_idx * 10);
-  uint64_t whole_part = size / divisor;
-  uint64_t remainder = size % divisor;
-  double full_size = (double)whole_part + ((double)remainder / divisor); // all of this trickery to not lose precision (double only holds 2^53 mantissa)
-
-  snprintf(buffer, buf_size, "%.1f %s", full_size, available_units[unit_idx]);
-}
-
-double get_size_percent_string(uint64_t size, uint64_t parent_size, char* buffer, size_t buf_size) {
-  double percentage = (double)size/parent_size;
-  snprintf(buffer, buf_size, "%.1f %%", percentage * 100);
-  return percentage;
 }
 
 // Event handling

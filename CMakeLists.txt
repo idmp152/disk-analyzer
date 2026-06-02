@@ -15,6 +15,7 @@ add_executable(disk_analyzer WIN32 src/main.cpp
                              src/tree_view.cpp
                              src/file_data_provider.cpp
                              src/treemap_widget.cpp
+                             src/formats.cpp
                              resources.rc)
 
 target_include_directories(disk_analyzer PRIVATE include)

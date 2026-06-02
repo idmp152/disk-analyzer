@@ -10,7 +10,6 @@
 #define COL_HEADER_HEIGHT 30
 #define COLS 3
 #define CELL_TEXT_PADDING 10
-#define UNIT_SIZE 5
 
 #define DEPTH_MULTIPLIER 15
 
@@ -62,6 +61,3 @@ private:
   // Other
   void recalculate_sizes();
 };
-
-void get_size_string(uint64_t size, char* buffer, size_t buf_size);
-double get_size_percent_string(uint64_t size, uint64_t parent_size, char* buffer, size_t buf_size);

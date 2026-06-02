@@ -1,6 +1,7 @@
 #include "ui.hpp"
 #include "tree_view.hpp"
 #include "treemap_widget.hpp"
+#include "formats.hpp"
 #include <math.h>
 #include <FL/Fl.H>
 #include <FL/Fl_Box.H>
@@ -10,6 +11,10 @@
 #include <FL/Fl_Choice.H>
 #include <FL/Fl_Button.H>
 #include <Fl/Fl_Progress.H>
+#include <FL/Fl_Menu_Bar.H>
+#include <FL/Fl_Native_File_Chooser.H>
+#include <iostream>
+#include <fstream>
 
 UIState g_ui_state;
 
@@ -84,6 +89,7 @@ void update_ui_timer_cb(void* data) {
             g_ui_state.scan_thread.join(); 
         }
 
+        g_ui_state.root = ctx->root_node;
         g_ui_state.tree_view->fill_flat_view(ctx->root_node);
         g_ui_state.tree_map->set_root(ctx->root_node);
 
@@ -190,8 +196,70 @@ Fl_Flex* stat_section() {
     return pack;
 }
 
+void export_txt_cb(Fl_Widget* w, void* data) {
+    Fl_Native_File_Chooser file_chooser(Fl_Native_File_Chooser::BROWSE_SAVE_FILE);
+    
+    file_chooser.title("Export Analysis Results");
+    file_chooser.filter("Text Files\t*.txt");
+    
+    file_chooser.options(Fl_Native_File_Chooser::SAVEAS_CONFIRM);
+
+    if (file_chooser.show() != 0) {
+        return;
+    }
+
+    std::string filepath = file_chooser.filename();
+    
+    if (filepath.size() < 4 || filepath.substr(filepath.size() - 4) != ".txt") {
+        filepath += ".txt";
+    }
+
+    std::ofstream outfile(filepath);
+    if (!outfile.is_open()) {
+        return;
+    }
+
+    traverse_tree_out(g_ui_state.root, 0, outfile);
+    outfile.close();
+}
+
+void export_csv_cb(Fl_Widget* w, void* data) { //TODO(IlyaBelykh): refactor to avoid repetition
+    Fl_Native_File_Chooser file_chooser(Fl_Native_File_Chooser::BROWSE_SAVE_FILE);
+    
+    file_chooser.title("Export Analysis Results");
+    file_chooser.filter("Comma-Separated Values\t*.csv");
+    
+    file_chooser.options(Fl_Native_File_Chooser::SAVEAS_CONFIRM);
+
+    if (file_chooser.show() != 0) {
+        return;
+    }
+
+    std::string filepath = file_chooser.filename();
+    
+    if (filepath.size() < 4 || filepath.substr(filepath.size() - 4) != ".csv") {
+        filepath += ".csv";
+    }
+
+    std::ofstream outfile(filepath);
+    if (!outfile.is_open()) {
+        return;
+    }
+
+    outfile << "Level 0;Level 1;Level 2;Level 3;Level 4;Level 5;Level 6;Level 7;Level 8;Level 9;Level 10;Level 11;Type;Size (bytes);Size;Percentage of parent\n";
+    traverse_tree_csv(g_ui_state.root, 0, outfile);
+    outfile.close();
+}
+
 Fl_Flex* main_div() {
     Fl_Flex* main_layout = new Fl_Flex(0, 0, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, Fl_Flex::VERTICAL);
+
+    Fl_Menu_Bar* menu_bar = new Fl_Menu_Bar(0, 0, 0, 0);
+    menu_bar->add("File/Export as TXT...", 0, export_txt_cb);
+    menu_bar->add("File/Export as CSV...", 0, export_csv_cb);
+    menu_bar->box(FL_FLAT_BOX);
+    main_layout->fixed(menu_bar, MENU_BAR_SIZE);
+
     Fl_Flex* top_row = new Fl_Flex(0, 0, 0, 0, Fl_Flex::HORIZONTAL);
 
     Fl_Flex* analyze_container = analyze_section();

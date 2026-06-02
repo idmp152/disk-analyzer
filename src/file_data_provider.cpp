@@ -3,6 +3,7 @@
 #include <FL/Fl.H>
 #include <FL/fl_utf8.h>
 #include "file_data_provider.hpp"
+#include "formats.hpp"
 
 uint64_t* is_directory_mask;
 uint64_t* is_expanded_mask;
@@ -88,12 +89,50 @@ FileNode* add_root_node(const char* path) {
     return root;
 }
 
-void traverse_tree_cout(FileNode* root, unsigned short depth) {
+void traverse_tree_out(FileNode* root, unsigned short depth, std::ostream& stream) {
     FileNode* curr = root;
     while (curr) {
+        char size_buf[32];
+        char percent_buf[32];
+        char format_buf[128];
+        get_size_string(curr->size, size_buf, 32);
+        get_size_percent_string(curr->size, (curr->parent) ? curr->parent->size : curr->size, percent_buf, 32);
+        snprintf(format_buf, 128, " (%s) [%s]", size_buf, percent_buf);
         std::string padding(depth*2, ' ');
-        std::cout << padding << (get_bit(is_directory_mask, (uint64_t)(curr - file_tree_buffer)) ? "- " : "> ") << curr->name << std::endl;
-        traverse_tree_cout(curr->first_child, depth + 1);
+        stream << padding << (get_bit(is_directory_mask, (uint64_t)(curr - file_tree_buffer)) ? "- " : "> ") << curr->name << format_buf << std::endl;
+        traverse_tree_out(curr->first_child, depth + 1, stream);
+        curr = curr->next_sibling;
+    }
+}
+
+void traverse_tree_csv(FileNode* root, unsigned short depth, std::ostream& stream) {
+    FileNode* curr = root;
+    while (curr) {
+        uint64_t node_index = (uint64_t)(curr - file_tree_buffer);
+        bool is_dir = get_bit(is_directory_mask, node_index);
+        
+        for (int i = 0; i < depth; ++i) {
+            stream << ";"; 
+        }
+        stream << curr->name;
+        
+        const int MAX_EXPECTED_DEPTH = 12;
+        for (int i = depth; i < MAX_EXPECTED_DEPTH; ++i) {
+            stream << ";";
+        }
+
+        char size_buf[32];
+        get_size_string(curr->size, size_buf, 32);
+        stream << (is_dir ? "Directory" : "File") << ";";
+        stream << curr->size << ";";
+        stream << size_buf << ";";
+        
+        char percent_buf[32];
+        get_size_percent_string(curr->size, (curr->parent) ? curr->parent->size : curr->size, percent_buf, 32);
+        stream << percent_buf << std::endl;
+        
+        traverse_tree_csv(curr->first_child, depth + 1, stream);
+        
         curr = curr->next_sibling;
     }
 }
