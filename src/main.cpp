@@ -56,6 +56,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     Fl_Double_Window *window = new Fl_Double_Window(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, "Disk Analyzer");
 
+    HICON hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(101));
+    if (hIcon) {
+        window->icon((const void*)hIcon);
+    }
+
     Fl_Flex* main_container = main_div();
 
     window->resizable(main_container);

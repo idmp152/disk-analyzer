@@ -9,7 +9,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_subdirectory(vendor/fltk)
 
-add_executable(disk_analyzer WIN32 src/main.cpp
+add_executable(DiskAnalyzer WIN32 src/main.cpp
                              src/arena.cpp
                              src/ui.cpp
                              src/tree_view.cpp
@@ -18,8 +18,8 @@ add_executable(disk_analyzer WIN32 src/main.cpp
                              src/formats.cpp
                              resources.rc)
 
-target_include_directories(disk_analyzer PRIVATE include)
-target_link_libraries(disk_analyzer fltk)
+target_include_directories(DiskAnalyzer PRIVATE include)
+target_link_libraries(DiskAnalyzer fltk)
 
 add_compile_options(-Wall -Wextra -Wpedantic)
 # if(WIN32)
