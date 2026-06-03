@@ -1,81 +1,87 @@
+#include <FL/Fl.H>
+#include <FL/Fl_Box.H>
+#include <FL/Fl_Double_Window.H>
+#include <FL/Fl_Flex.H>
 #include <windows.h>
-#include <iostream>
 #include <cstdint>
+#include <iostream>
 #include <string>
 #include <vector>
-#include <FL/Fl.H>
-#include <FL/Fl_Flex.H>
-#include <FL/Fl_Double_Window.H>
-#include <FL/Fl_Box.H>
 #include "arena.hpp"
-#include "ui.hpp"
 #include "file_data_provider.hpp"
+#include "ui.hpp"
 
 #define FILE_TREE_BUFFER_CAPACITY 100 * 1024 * 1024
 #define STRING_BUFFER_CAPACITY 80 * 1024 * 1024
 
-
 void* string_buffer;
 
 void window_callback(Fl_Widget* w, void* data) {
-    if (Fl::callback_reason() == FL_REASON_CANCELLED)
-        return;
+  if (Fl::callback_reason() == FL_REASON_CANCELLED)
+    return;
 
-    if (g_ui_state.is_scanning && g_ui_state.current_ctx) {
-        g_ui_state.current_ctx->should_cancel = true;
-        
-        if (g_ui_state.scan_thread.joinable()) {
-            g_ui_state.scan_thread.join(); 
-        }
-        
-        delete g_ui_state.current_ctx;
+  if (g_ui_state.is_scanning && g_ui_state.current_ctx) {
+    g_ui_state.current_ctx->should_cancel = true;
+
+    if (g_ui_state.scan_thread.joinable()) {
+      g_ui_state.scan_thread.join();
     }
 
-    w->hide();    
+    delete g_ui_state.current_ctx;
+  }
+
+  w->hide();
 }
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
-    SetConsoleOutputCP(CP_UTF8);
-    Fl::get_system_colors();
+int WINAPI WinMain(HINSTANCE hInstance,
+                   HINSTANCE hPrevInstance,
+                   LPSTR lpCmdLine,
+                   int nCmdShow) {
+  SetConsoleOutputCP(CP_UTF8);
+  Fl::get_system_colors();
 
-    FileNode* file_tree_buffer = (FileNode*)malloc(FILE_TREE_BUFFER_CAPACITY);
+  FileNode* file_tree_buffer = (FileNode*)malloc(FILE_TREE_BUFFER_CAPACITY);
 
-    Arena string_arena;
-    string_buffer = malloc(STRING_BUFFER_CAPACITY);
-    arena_init(&string_arena, string_buffer, STRING_BUFFER_CAPACITY);
+  Arena string_arena;
+  string_buffer = malloc(STRING_BUFFER_CAPACITY);
+  arena_init(&string_arena, string_buffer, STRING_BUFFER_CAPACITY);
 
-    size_t mask_bytes = (((FILE_TREE_BUFFER_CAPACITY / sizeof(FileNode)) + 63) / 64) * sizeof(uint64_t);
-    uint64_t* is_directory_mask = (uint64_t*)calloc(1, mask_bytes);
-    uint64_t* is_expanded_mask = (uint64_t*)calloc(1, mask_bytes);
+  size_t mask_bytes =
+      (((FILE_TREE_BUFFER_CAPACITY / sizeof(FileNode)) + 63) / 64) *
+      sizeof(uint64_t);
+  uint64_t* is_directory_mask = (uint64_t*)calloc(1, mask_bytes);
+  uint64_t* is_expanded_mask = (uint64_t*)calloc(1, mask_bytes);
 
-    provider_init(&string_arena, file_tree_buffer, is_directory_mask, is_expanded_mask);
-    fill_drive_info();
+  provider_init(&string_arena, file_tree_buffer, is_directory_mask,
+                is_expanded_mask);
+  fill_drive_info();
 
-    Fl::set_font(MAIN_FONT, "Segoe UI");
-    Fl::set_font(MAIN_FONT_BOLD, "BSegoe UI");
+  Fl::set_font(MAIN_FONT, "Segoe UI");
+  Fl::set_font(MAIN_FONT_BOLD, "BSegoe UI");
 
-    Fl_Double_Window *window = new Fl_Double_Window(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, "Disk Analyzer");
+  Fl_Double_Window* window = new Fl_Double_Window(
+      DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, "Disk Analyzer");
 
-    HICON hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(101));
-    if (hIcon) {
-        window->icon((const void*)hIcon);
-    }
+  HICON hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(101));
+  if (hIcon) {
+    window->icon((const void*)hIcon);
+  }
 
-    Fl_Flex* main_container = main_div();
+  Fl_Flex* main_container = main_div();
 
-    window->resizable(main_container);
-    window->size_range(INFO_CONTAINER_SIZE*2, TOP_ROW_HEIGHT + TREEMAP_WIDGET_SIZE);
-    window->end();
-    window->show();
-    window->callback(window_callback);
+  window->resizable(main_container);
+  window->size_range(INFO_CONTAINER_SIZE * 2,
+                     TOP_ROW_HEIGHT + TREEMAP_WIDGET_SIZE);
+  window->end();
+  window->show();
+  window->callback(window_callback);
 
-    Fl::run();
+  Fl::run();
 
-    free(file_tree_buffer);
-    free(string_buffer);
-    free(is_directory_mask);
-    free(is_expanded_mask);
+  free(file_tree_buffer);
+  free(string_buffer);
+  free(is_directory_mask);
+  free(is_expanded_mask);
 
-    return 0;
+  return 0;
 }
-
