@@ -59,8 +59,8 @@ int WINAPI WinMain(HINSTANCE hInstance,
   Fl::set_font(MAIN_FONT, "Segoe UI");
   Fl::set_font(MAIN_FONT_BOLD, "BSegoe UI");
 
-  auto* window = new Fl_Double_Window(
-      DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, "Disk Analyzer");
+  auto* window = new Fl_Double_Window(DEFAULT_WINDOW_WIDTH,
+                                      DEFAULT_WINDOW_HEIGHT, "Disk Analyzer");
 
   HICON hIcon = LoadIcon(GetModuleHandle(nullptr), MAKEINTRESOURCE(101));
   if (hIcon != nullptr) {

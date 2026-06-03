@@ -300,7 +300,7 @@ void export_csv_cb(
 
 Fl_Flex* main_div() {
   auto* main_layout = new Fl_Flex(0, 0, DEFAULT_WINDOW_WIDTH,
-                                     DEFAULT_WINDOW_HEIGHT, Fl_Flex::VERTICAL);
+                                  DEFAULT_WINDOW_HEIGHT, Fl_Flex::VERTICAL);
 
   auto* menu_bar = new Fl_Menu_Bar(0, 0, 0, 0);
   menu_bar->add("File/Export as TXT...", 0, export_txt_cb);

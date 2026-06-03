@@ -31,7 +31,8 @@ char* utf16_to_utf8(const wchar_t* str) {
       string_arena, size_needed + 1,
       DEFAULT_ALIGNMENT);  // TODO(IlyaBelykh): handle out of memory possible
                            // exceptions
-  WideCharToMultiByte(CP_UTF8, 0, str, -1, new_str, size_needed, nullptr, nullptr);
+  WideCharToMultiByte(CP_UTF8, 0, str, -1, new_str, size_needed, nullptr,
+                      nullptr);
   return new_str;
 }
 
@@ -88,7 +89,8 @@ void iterate_dir(const char* path, FileNode* parent, ScanContext* ctx) {
       if (ctx->files_scanned % 500 == 0) {
         Fl::awake();
       }
-    } while (FindNextFileW(hFind, &data) != 0); // TODO(IlyaBelykh): implicit bool conversion?
+    } while (FindNextFileW(hFind, &data) !=
+             0);  // TODO(IlyaBelykh): implicit bool conversion?
     FindClose(hFind);
     parent->first_child = dummy_node.next_sibling;
   }
@@ -111,9 +113,10 @@ void traverse_tree_out(FileNode* root,
     char percent_buf[32];
     char format_buf[128];
     get_size_string(curr->size, size_buf, 32);
-    get_size_percent_string(curr->size,
-                            ((curr->parent) != nullptr) ? curr->parent->size : curr->size,
-                            percent_buf, 32);
+    get_size_percent_string(
+        curr->size,
+        ((curr->parent) != nullptr) ? curr->parent->size : curr->size,
+        percent_buf, 32);
     snprintf(format_buf, 128, " (%s) [%s]", size_buf, percent_buf);
     std::string padding(depth * 2, ' ');
     stream << padding
@@ -151,9 +154,10 @@ void traverse_tree_csv(FileNode* root,
     stream << size_buf << ";";
 
     char percent_buf[32];
-    get_size_percent_string(curr->size,
-                            ((curr->parent) != nullptr) ? curr->parent->size : curr->size,
-                            percent_buf, 32);
+    get_size_percent_string(
+        curr->size,
+        ((curr->parent) != nullptr) ? curr->parent->size : curr->size,
+        percent_buf, 32);
     stream << percent_buf << std::endl;
 
     traverse_tree_csv(curr->first_child, depth + 1, stream);
@@ -202,7 +206,8 @@ void fill_drive_info() {
     ULARGE_INTEGER totalNumberOfFreeBytes;
 
     if (GetDiskFreeSpaceExW(drive_letter, &freeBytesAvailable,
-                            &totalNumberOfBytes, &totalNumberOfFreeBytes) != 0) { // TODO(IlyaBelykh): implicit bool conversion?
+                            &totalNumberOfBytes, &totalNumberOfFreeBytes) !=
+        0) {  // TODO(IlyaBelykh): implicit bool conversion?
       info.total_size = totalNumberOfBytes.QuadPart;
       info.free_size = totalNumberOfFreeBytes.QuadPart;
     }
