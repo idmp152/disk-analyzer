@@ -35,11 +35,11 @@ double get_size_percent_string(uint64_t size,
 }
 
 void get_full_path(FileNode* node, char* buffer, size_t buf_size) {
-  if (!buffer || buf_size == 0)
+  if ((buffer == nullptr) || buf_size == 0)
     return;
 
   buffer[0] = '\0';
-  if (!node)
+  if (node == nullptr)
     return;
 
   size_t current_pos = buf_size - 1;
@@ -48,8 +48,8 @@ void get_full_path(FileNode* node, char* buffer, size_t buf_size) {
   FileNode* curr = node;
   bool is_first = true;
 
-  while (curr) {
-    if (!curr->name) {
+  while (curr != nullptr) {
+    if (curr->name == nullptr) {
       curr = curr->parent;
       continue;
     }

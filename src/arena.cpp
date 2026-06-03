@@ -8,7 +8,9 @@ bool is_power_of_two(uintptr_t ptr) {
 }
 
 uintptr_t align_forward(uintptr_t ptr, size_t align) {
-  uintptr_t mod, new_ptr, al;
+  uintptr_t mod;
+  uintptr_t new_ptr;
+  uintptr_t al;
 
   assert(is_power_of_two(align));
 

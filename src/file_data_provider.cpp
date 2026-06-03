@@ -26,12 +26,12 @@ void provider_init(Arena* str_arena,
 
 char* utf16_to_utf8(const wchar_t* str) {
   int size_needed =
-      WideCharToMultiByte(CP_UTF8, 0, str, -1, NULL, 0, NULL, NULL);
+      WideCharToMultiByte(CP_UTF8, 0, str, -1, nullptr, 0, nullptr, nullptr);
   char* new_str = (char*)arena_alloc_align(
       string_arena, size_needed + 1,
       DEFAULT_ALIGNMENT);  // TODO(IlyaBelykh): handle out of memory possible
                            // exceptions
-  WideCharToMultiByte(CP_UTF8, 0, str, -1, new_str, size_needed, NULL, NULL);
+  WideCharToMultiByte(CP_UTF8, 0, str, -1, new_str, size_needed, nullptr, nullptr);
   return new_str;
 }
 
@@ -73,7 +73,7 @@ void iterate_dir(const char* path, FileNode* parent, ScanContext* ctx) {
       prev_node = file;
       ctx->files_scanned++;
 
-      if (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+      if ((data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0u) {
         search_mask = path;
         search_mask += "\\";
         search_mask += filename;
@@ -88,7 +88,7 @@ void iterate_dir(const char* path, FileNode* parent, ScanContext* ctx) {
       if (ctx->files_scanned % 500 == 0) {
         Fl::awake();
       }
-    } while (FindNextFileW(hFind, &data));
+    } while (FindNextFileW(hFind, &data) != 0); // TODO(IlyaBelykh): implicit bool conversion?
     FindClose(hFind);
     parent->first_child = dummy_node.next_sibling;
   }
@@ -106,13 +106,13 @@ void traverse_tree_out(FileNode* root,
                        unsigned short depth,
                        std::ostream& stream) {
   FileNode* curr = root;
-  while (curr) {
+  while (curr != nullptr) {
     char size_buf[32];
     char percent_buf[32];
     char format_buf[128];
     get_size_string(curr->size, size_buf, 32);
     get_size_percent_string(curr->size,
-                            (curr->parent) ? curr->parent->size : curr->size,
+                            ((curr->parent) != nullptr) ? curr->parent->size : curr->size,
                             percent_buf, 32);
     snprintf(format_buf, 128, " (%s) [%s]", size_buf, percent_buf);
     std::string padding(depth * 2, ' ');
@@ -130,8 +130,8 @@ void traverse_tree_csv(FileNode* root,
                        unsigned short depth,
                        std::ostream& stream) {
   FileNode* curr = root;
-  while (curr) {
-    uint64_t node_index = (uint64_t)(curr - file_tree_buffer);
+  while (curr != nullptr) {
+    auto node_index = (uint64_t)(curr - file_tree_buffer);
     bool is_dir = get_bit(is_directory_mask, node_index);
 
     for (int i = 0; i < depth; ++i) {
@@ -152,7 +152,7 @@ void traverse_tree_csv(FileNode* root,
 
     char percent_buf[32];
     get_size_percent_string(curr->size,
-                            (curr->parent) ? curr->parent->size : curr->size,
+                            ((curr->parent) != nullptr) ? curr->parent->size : curr->size,
                             percent_buf, 32);
     stream << percent_buf << std::endl;
 
@@ -193,15 +193,16 @@ void fill_drive_info() {
     WCHAR fs_name[MAX_PATH] = L"";
 
     if (GetVolumeInformationW(drive_letter, nullptr, 0, nullptr, nullptr,
-                              nullptr, fs_name, MAX_PATH)) {
+                              nullptr, fs_name, MAX_PATH) != 0) {
       info.is_ntfs = (wcscmp(fs_name, L"NTFS") == 0);
     }
 
-    ULARGE_INTEGER freeBytesAvailable, totalNumberOfBytes,
-        totalNumberOfFreeBytes;
+    ULARGE_INTEGER freeBytesAvailable;
+    ULARGE_INTEGER totalNumberOfBytes;
+    ULARGE_INTEGER totalNumberOfFreeBytes;
 
     if (GetDiskFreeSpaceExW(drive_letter, &freeBytesAvailable,
-                            &totalNumberOfBytes, &totalNumberOfFreeBytes)) {
+                            &totalNumberOfBytes, &totalNumberOfFreeBytes) != 0) { // TODO(IlyaBelykh): implicit bool conversion?
       info.total_size = totalNumberOfBytes.QuadPart;
       info.free_size = totalNumberOfFreeBytes.QuadPart;
     }
@@ -212,15 +213,15 @@ void fill_drive_info() {
 }
 
 FileNode* merge_sibling_lists(FileNode* a, FileNode* b) {
-  if (!a)
+  if (a == nullptr)
     return b;
-  if (!b)
+  if (b == nullptr)
     return a;
 
   FileNode dummy;
   FileNode* tail = &dummy;
 
-  while (a && b) {
+  while ((a != nullptr) && (b != nullptr)) {
     if (a->size >= b->size) {
       tail->next_sibling = a;
       a = a->next_sibling;
@@ -231,7 +232,7 @@ FileNode* merge_sibling_lists(FileNode* a, FileNode* b) {
     tail = tail->next_sibling;
   }
 
-  if (a) {
+  if (a != nullptr) {
     tail->next_sibling = a;
   } else {
     tail->next_sibling = b;
@@ -241,14 +242,14 @@ FileNode* merge_sibling_lists(FileNode* a, FileNode* b) {
 }
 
 FileNode* merge_sort_siblings(FileNode* head) {
-  if (!head || !head->next_sibling) {
+  if ((head == nullptr) || (head->next_sibling == nullptr)) {
     return head;
   }
 
   FileNode* slow = head;
   FileNode* fast = head->next_sibling;
 
-  while (fast && fast->next_sibling) {
+  while ((fast != nullptr) && (fast->next_sibling != nullptr)) {
     slow = slow->next_sibling;
     fast = fast->next_sibling->next_sibling;
   }
@@ -263,15 +264,15 @@ FileNode* merge_sort_siblings(FileNode* head) {
 }
 
 void sort_directory_tree(FileNode* root) {
-  if (!root)
+  if (root == nullptr)
     return;
 
-  if (root->first_child) {
+  if (root->first_child != nullptr) {
     root->first_child = merge_sort_siblings(root->first_child);
   }
 
   FileNode* curr = root->first_child;
-  while (curr) {
+  while (curr != nullptr) {
     sort_directory_tree(curr);
     curr = curr->next_sibling;
   }

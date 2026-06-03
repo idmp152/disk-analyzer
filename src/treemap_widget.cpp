@@ -21,7 +21,7 @@ void FileTreeMap::draw_slice_and_dice(int x,
                                       int h,
                                       bool vertical,
                                       FileNode* root) {
-  if (w <= 3 || h <= 3 || !root || !root->first_child)
+  if (w <= 3 || h <= 3 || (root == nullptr) || (root->first_child == nullptr))
     return;
 
   FileNode* curr = root->first_child;
@@ -31,7 +31,7 @@ void FileTreeMap::draw_slice_and_dice(int x,
   uint64_t others_combined_size = 0;
   uint64_t accumulated_size = 0;
 
-  while (curr) {
+  while (curr != nullptr) {
     if (curr->size <= 0) {
       curr = curr->next_sibling;
       continue;
@@ -61,7 +61,7 @@ void FileTreeMap::draw_slice_and_dice(int x,
       if (current_h > 0) {
         fl_rect(x, start_y, w + 1, current_h + 1);
 
-        if (!curr->first_child) {
+        if (curr->first_child == nullptr) {
           visual_elements.push_back({x, start_y, w, current_h, curr});
         }
       }
@@ -75,7 +75,7 @@ void FileTreeMap::draw_slice_and_dice(int x,
       if (current_w > 0) {
         fl_rect(start_x, y, current_w + 1, h + 1);
 
-        if (!curr->first_child) {
+        if (curr->first_child == nullptr) {
           visual_elements.push_back({start_x, y, current_w, h, curr});
         }
       }
@@ -134,7 +134,7 @@ int FileTreeMap::handle(int event) {
     return 1;
   }
 
-  if (!(event == FL_MOVE || event == FL_ENTER)) {
+  if (event != FL_MOVE && event != FL_ENTER) {
     return Fl_Widget::handle(event);
   }
 
@@ -166,7 +166,7 @@ int FileTreeMap::handle(int event) {
 
       if (is_hovered_others) {
         snprintf(tooltip_buf, sizeof(tooltip_buf), "Small files");
-      } else if (hovered_node && hovered_node->name) {
+      } else if ((hovered_node != nullptr) && (hovered_node->name != nullptr)) {
         char size_buf[32];
         char name_buf[128];
         get_size_string(hovered_node->size, size_buf, 32);
@@ -195,7 +195,7 @@ void FileTreeMap::draw() {
   hovered_node = nullptr;
   is_hovered_others = false;
 
-  if (!root_node || root_node->size == 0)
+  if ((root_node == nullptr) || root_node->size == 0)
     return;
 
   fl_color(FL_BLACK);

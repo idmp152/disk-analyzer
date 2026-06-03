@@ -38,8 +38,8 @@ struct ScanContext {
   std::atomic<bool> should_cancel{false};
 };
 
-inline bool get_bit(uint64_t* mask, uint64_t idx) {
-  return (mask[idx >> 6] >> (idx & 63)) & 1ULL;
+inline bool get_bit(const uint64_t* mask, uint64_t idx) {
+  return ((mask[idx >> 6] >> (idx & 63)) & 1ULL) != 0u;
 }
 
 inline void set_bit(uint64_t* mask, uint64_t idx) {

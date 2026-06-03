@@ -19,13 +19,13 @@
 UIState g_ui_state;
 
 Fl_Box* add_stat_row(const char* key_label, const char* value_label) {
-  Fl_Flex* row = new Fl_Flex(0, 0, 0, TEXT_ROW_HEIGHT, Fl_Flex::HORIZONTAL);
+  auto* row = new Fl_Flex(0, 0, 0, TEXT_ROW_HEIGHT, Fl_Flex::HORIZONTAL);
 
-  Fl_Box* key = new Fl_Box(0, 0, 0, TEXT_ROW_HEIGHT, key_label);
+  auto* key = new Fl_Box(0, 0, 0, TEXT_ROW_HEIGHT, key_label);
   key->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
   key->labelfont(MAIN_FONT);
 
-  Fl_Box* value = new Fl_Box(0, 0, 0, TEXT_ROW_HEIGHT, value_label);
+  auto* value = new Fl_Box(0, 0, 0, TEXT_ROW_HEIGHT, value_label);
   value->align(FL_ALIGN_RIGHT | FL_ALIGN_INSIDE);
   value->labelfont(MAIN_FONT_BOLD);
 
@@ -34,7 +34,7 @@ Fl_Box* add_stat_row(const char* key_label, const char* value_label) {
 }
 
 void flex_spacer(Fl_Flex* flex_element, int size) {
-  Fl_Box* spacer = new Fl_Box(0, 0, 0, 0);
+  auto* spacer = new Fl_Box(0, 0, 0, 0);
   flex_element->fixed(spacer, size);
 }
 
@@ -73,14 +73,14 @@ void update_stat_labels(int drive_idx) {
 }
 
 void drive_choice_cb(Fl_Widget* widget, void* data) {
-  Fl_Choice* choice = (Fl_Choice*)(widget);
+  auto* choice = (Fl_Choice*)widget;
 
   int selected_idx = choice->value();
   update_stat_labels(selected_idx);
 }
 
 void update_ui_timer_cb(void* data) {
-  ScanContext* ctx = (ScanContext*)(data);
+  auto* ctx = (ScanContext*)data;
 
   if (ctx->is_finished.load()) {
     g_ui_state.progress_bar->value(100.0);
@@ -160,12 +160,12 @@ void analyze_button_cb(Fl_Widget* widget, void* data) {
   size_t bytes_needed = path_to_scan.size() + 1;
   char* arena_path =
       (char*)arena_alloc_align(string_arena, bytes_needed, DEFAULT_ALIGNMENT);
-  if (!arena_path)
+  if (arena_path == nullptr)
     return;
 
   memcpy(arena_path, path_to_scan.c_str(), bytes_needed);
 
-  ScanContext* ctx = new ScanContext();
+  auto* ctx = new ScanContext();
   ctx->start_path = arena_path;
   ctx->root_node = add_root_node(ctx->start_path);
 
@@ -177,16 +177,16 @@ void analyze_button_cb(Fl_Widget* widget, void* data) {
 }
 
 Fl_Flex* analyze_section() {
-  Fl_Flex* pack = new Fl_Flex(0, 0, 0, 0, Fl_Flex::VERTICAL);
+  auto* pack = new Fl_Flex(0, 0, 0, 0, Fl_Flex::VERTICAL);
   pack->margin(MARGIN);
 
-  Fl_Flex* row = new Fl_Flex(0, 0, 0, 0, Fl_Flex::HORIZONTAL);
+  auto* row = new Fl_Flex(0, 0, 0, 0, Fl_Flex::HORIZONTAL);
 
-  Fl_Box* choice_label = new Fl_Box(0, 0, 0, 0, "Choose: ");
+  auto* choice_label = new Fl_Box(0, 0, 0, 0, "Choose: ");
   choice_label->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
   choice_label->labelfont(MAIN_FONT);
 
-  Fl_Choice* choice = new Fl_Choice(0, 0, 0, 0);
+  auto* choice = new Fl_Choice(0, 0, 0, 0);
   g_ui_state.drive_choice = choice;
   choice->textfont(MAIN_FONT);
   for (const DriveInfo& drive : drives) {
@@ -199,7 +199,7 @@ Fl_Flex* analyze_section() {
 
   flex_spacer(row, MARGIN);
 
-  Fl_Button* analyze = new Fl_Button(0, 0, 0, 0, "Analyze");
+  auto* analyze = new Fl_Button(0, 0, 0, 0, "Analyze");
   analyze->labelfont(MAIN_FONT);
   analyze->box(FL_THIN_UP_BOX);
   analyze->visible_focus(0);
@@ -209,7 +209,7 @@ Fl_Flex* analyze_section() {
 
   flex_spacer(pack, ANALYZER_SECTION_ROW_GAP);
 
-  Fl_Progress* progress_bar = new Fl_Progress(0, 0, 0, 0);
+  auto* progress_bar = new Fl_Progress(0, 0, 0, 0);
   g_ui_state.progress_bar = progress_bar;
   progress_bar->box(FL_BORDER_BOX);
   progress_bar->color(FL_WHITE, PROGRESSBAR_COLOR);
@@ -222,7 +222,7 @@ Fl_Flex* analyze_section() {
 }
 
 Fl_Flex* stat_section() {
-  Fl_Flex* pack = new Fl_Flex(0, 0, 0, 0);
+  auto* pack = new Fl_Flex(0, 0, 0, 0);
   pack->margin(MARGIN);
   g_ui_state.val_selected = add_stat_row("Selected: ", "");
   g_ui_state.val_total = add_stat_row("Total Volume: ", "");
@@ -299,16 +299,16 @@ void export_csv_cb(
 }
 
 Fl_Flex* main_div() {
-  Fl_Flex* main_layout = new Fl_Flex(0, 0, DEFAULT_WINDOW_WIDTH,
+  auto* main_layout = new Fl_Flex(0, 0, DEFAULT_WINDOW_WIDTH,
                                      DEFAULT_WINDOW_HEIGHT, Fl_Flex::VERTICAL);
 
-  Fl_Menu_Bar* menu_bar = new Fl_Menu_Bar(0, 0, 0, 0);
+  auto* menu_bar = new Fl_Menu_Bar(0, 0, 0, 0);
   menu_bar->add("File/Export as TXT...", 0, export_txt_cb);
   menu_bar->add("File/Export as CSV...", 0, export_csv_cb);
   menu_bar->box(FL_FLAT_BOX);
   main_layout->fixed(menu_bar, MENU_BAR_SIZE);
 
-  Fl_Flex* top_row = new Fl_Flex(0, 0, 0, 0, Fl_Flex::HORIZONTAL);
+  auto* top_row = new Fl_Flex(0, 0, 0, 0, Fl_Flex::HORIZONTAL);
 
   Fl_Flex* analyze_container = analyze_section();
   new Fl_Box(0, 0, 0, 0);
@@ -320,15 +320,15 @@ Fl_Flex* main_div() {
 
   main_layout->fixed(top_row, TOP_ROW_HEIGHT);
 
-  Fl_Flex* middle_row = new Fl_Flex(0, 0, 0, 0, Fl_Flex::HORIZONTAL);
+  auto* middle_row = new Fl_Flex(0, 0, 0, 0, Fl_Flex::HORIZONTAL);
 
-  TreeView* tree_view = new TreeView(0, 0, 0, 0);
+  auto* tree_view = new TreeView(0, 0, 0, 0);
   tree_view->set_font(MAIN_FONT, FONT_SIZE);
   g_ui_state.tree_view = tree_view;
 
   middle_row->end();
 
-  FileTreeMap* treemap_widget = new FileTreeMap(0, 0, 0, 0);
+  auto* treemap_widget = new FileTreeMap(0, 0, 0, 0);
   g_ui_state.tree_map = treemap_widget;
 
   main_layout->fixed(treemap_widget, TREEMAP_WIDGET_SIZE);

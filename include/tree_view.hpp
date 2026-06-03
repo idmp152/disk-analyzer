@@ -55,8 +55,8 @@ class TreeView : public Fl_Table {
 
   // Rendering
   void draw_content_cell(int ROW, int COL, int X, int Y, int W, int H);
-  void begin_draw_cell(int X, int Y, int W, int H);
-  void end_draw_cell(int X, int Y, int W, int H);
+  static void begin_draw_cell(int X, int Y, int W, int H); // TODO(IlyaBelykh): clang-tidy offered making them static
+  static void end_draw_cell(int X, int Y, int W, int H);   // My counter-offer would be making them a non-member function, will take a look into this later
   void draw_data(const char* s, int X, int Y, int W, int H, Fl_Align alignment);
   void draw_header(const char* s, int X, int Y, int W, int H);
   void draw_name(const char* s,

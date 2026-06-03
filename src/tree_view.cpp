@@ -14,7 +14,7 @@ void build_flat_view(FileNode* root,
                      std::vector<ViewItem>* flat_view,
                      unsigned short depth) {
   FileNode* curr = root;
-  while (curr) {
+  while (curr != nullptr) {
     ViewItem item = {.node_idx = (uint64_t)(curr - file_tree_buffer),
                      .depth = depth};
     flat_view->push_back(item);
@@ -31,7 +31,7 @@ void draw_padded_text(const char* s,
                       int H,
                       Fl_Align alignment) {
   int text_x = X + CELL_TEXT_PADDING;
-  int text_w = W - CELL_TEXT_PADDING * 2;
+  int text_w = W - (CELL_TEXT_PADDING * 2);
   fl_color(FL_GRAY0);
   fl_draw(s, text_x, Y, text_w, H, alignment | FL_ALIGN_INSIDE);
 }
@@ -50,7 +50,10 @@ void TreeView::handle_events() {
   if (col != NAME_COL)
     return;
 
-  int cell_x, cell_y, cell_w, cell_h;
+  int cell_x;
+  int cell_y;
+  int cell_w;
+  int cell_h;
   find_cell(Fl_Table::CONTEXT_CELL, row, col, cell_x, cell_y, cell_w, cell_h);
 
   int depth = flat_view[row].depth * DEPTH_MULTIPLIER;
@@ -65,7 +68,7 @@ void TreeView::handle_events() {
 }
 
 void TreeView::table_callback(Fl_Widget* w, void* data) {
-  TreeView* tree_view = (TreeView*)w;
+  auto* tree_view = (TreeView*)w;
   tree_view->handle_events();
 }
 
@@ -117,8 +120,8 @@ void TreeView::draw_name(const char* s,
   if (is_directory) {
     fl_draw(is_expanded ? "-" : "+", X + depth, Y, expand_size, expand_size,
             FL_ALIGN_CENTER);
-    fl_rect(X + depth + padding, Y + padding + 2, expand_size - 2 * padding,
-            expand_size - 2 * padding);
+    fl_rect(X + depth + padding, Y + padding + 2, expand_size - (2 * padding),
+            expand_size - (2 * padding));
   }
   end_draw_cell(X, Y, W, H);
 }
@@ -167,7 +170,7 @@ void TreeView::draw_content_cell(int ROW, int COL, int X, int Y, int W, int H) {
       break;
     case SIZE_PERCENT_COL: {
       double percentage = 1;
-      if (node->parent) {
+      if (node->parent != nullptr) {
         percentage = get_size_percent_string(node->size, node->parent->size,
                                              char_buf, 32);
       } else {
