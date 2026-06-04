@@ -4,10 +4,10 @@
 #include <math.h>
 #include "formats.hpp"
 
-const char* col_headers[COLS] = {"Name", "Size", "Percentage of parent size"};
-const Fl_Align col_alignments[COLS] = {FL_ALIGN_LEFT, FL_ALIGN_RIGHT,
+const char* COL_HEADERS[COLS] = {"Name", "Size", "Percentage of parent size"};
+const Fl_Align COL_ALIGNMENTS[COLS] = {FL_ALIGN_LEFT, FL_ALIGN_RIGHT,
                                        FL_ALIGN_RIGHT};
-const int col_size_ratios[COLS] = {
+const int COL_SIZE_RATIOS[COLS] = {
     4, 1, 2};  //  4:1:2 ratio for size, percentage and name is adequate
 
 void build_flat_view(FileNode* root,
@@ -103,7 +103,7 @@ void TreeView::draw_name(const char* s,
                          bool is_directory,
                          bool is_expanded) {
   begin_draw_cell(X, Y, W, H);
-  int padding = 5;
+  const int PADDING = 5;
   int icon_size = H;
   int expand_size = icon_size;
 
@@ -113,15 +113,15 @@ void TreeView::draw_name(const char* s,
   // TODO(IlyaBelykh): Possibly load an emoji font from the Segoe UI pack and
   // make an icon decider function based on the extension
   fl_draw_symbol((is_directory ? "@fileopen" : "@filenew"),
-                 X + padding + depth + expand_size, Y + padding,
-                 icon_size - padding, icon_size - padding,
+                 X + PADDING + depth + expand_size, Y + PADDING,
+                 icon_size - PADDING, icon_size - PADDING,
                  (is_directory ? FL_YELLOW : FL_GRAY));
   fl_color(FL_GRAY0);
   if (is_directory) {
     fl_draw(is_expanded ? "-" : "+", X + depth, Y, expand_size, expand_size,
             FL_ALIGN_CENTER);
-    fl_rect(X + depth + padding, Y + padding + 2, expand_size - (2 * padding),
-            expand_size - (2 * padding));
+    fl_rect(X + depth + PADDING, Y + PADDING + 2, expand_size - (2 * PADDING),
+            expand_size - (2 * PADDING));
   }
   end_draw_cell(X, Y, W, H);
 }
@@ -166,7 +166,7 @@ void TreeView::draw_content_cell(int ROW, int COL, int X, int Y, int W, int H) {
       break;
     case SIZE_COL:
       get_size_string(node->size, char_buf, 32);
-      draw_data(char_buf, X, Y, W, H, col_alignments[COL]);
+      draw_data(char_buf, X, Y, W, H, COL_ALIGNMENTS[COL]);
       break;
     case SIZE_PERCENT_COL: {
       double percentage = 1;
@@ -176,11 +176,11 @@ void TreeView::draw_content_cell(int ROW, int COL, int X, int Y, int W, int H) {
       } else {
         strcpy(char_buf, "100.0 %");
       }
-      draw_progressbar(char_buf, X, Y, W, H, col_alignments[COL], percentage);
+      draw_progressbar(char_buf, X, Y, W, H, COL_ALIGNMENTS[COL], percentage);
       break;
     }
     default:
-      draw_data("0451", X, Y, W, H, col_alignments[COL]);
+      draw_data("0451", X, Y, W, H, COL_ALIGNMENTS[COL]);
       break;
   }
 }
@@ -194,12 +194,12 @@ void TreeView::recalculate_sizes() {
 
   int ratio_sum = 0;
   for (int i = 0; i < cols(); ++i) {
-    ratio_sum += col_size_ratios[i];
+    ratio_sum += COL_SIZE_RATIOS[i];
   }
 
   int size_sum = 0;
   for (int i = 0; i < cols() - 1; ++i) {
-    int curr_size = tiw * col_size_ratios[i] / ratio_sum;
+    int curr_size = tiw * COL_SIZE_RATIOS[i] / ratio_sum;
     size_sum += curr_size;
     col_width(i, curr_size);
   }
@@ -220,7 +220,7 @@ void TreeView::draw_cell(TableContext context,
       fl_font(cell_font, cell_font_size);
       return;
     case CONTEXT_COL_HEADER:
-      draw_header(col_headers[COL], X, Y, W, H);
+      draw_header(COL_HEADERS[COL], X, Y, W, H);
       return;
     case CONTEXT_CELL:
       draw_content_cell(ROW, COL, X, Y, W, H);

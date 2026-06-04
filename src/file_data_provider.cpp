@@ -74,7 +74,7 @@ void iterate_dir(const char* path, FileNode* parent, ScanContext* ctx) {
       prev_node = file;
       ctx->files_scanned++;
 
-      if ((data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0u) {
+      if ((data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0U) {
         search_mask = path;
         search_mask += "\\";
         search_mask += filename;
@@ -86,7 +86,7 @@ void iterate_dir(const char* path, FileNode* parent, ScanContext* ctx) {
 
       parent->size += file->size;
 
-      if (ctx->files_scanned % 500 == 0) {
+      if (ctx->files_scanned % SCAN_PROGRESS_STEP == 0) {
         Fl::awake();
       }
     } while (FindNextFileW(hFind, &data) !=

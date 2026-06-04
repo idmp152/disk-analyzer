@@ -18,6 +18,8 @@
 
 UIState g_ui_state;
 
+const double SCAN_TIMER_TICK = 0.03;
+
 Fl_Box* add_stat_row(const char* key_label, const char* value_label) {
   auto* row = new Fl_Flex(0, 0, 0, TEXT_ROW_HEIGHT, Fl_Flex::HORIZONTAL);
 
@@ -98,18 +100,18 @@ void update_ui_timer_cb(void* data) {
     g_ui_state.current_ctx = nullptr;
     delete ctx;
     return;
-  } else {
-    const double P = 0.4;
-    const double K = 100.0;
-
-    double N_pow = std::pow((double)(ctx->files_scanned.load()), P);
-    double progress_val = 100.0 * (N_pow / (N_pow + K));
-
-    g_ui_state.progress_bar->value(progress_val);
-    g_ui_state.progress_bar->redraw();
   }
 
-  Fl::repeat_timeout(0.03, update_ui_timer_cb, ctx);
+  const float P = 0.4F;
+  const float K = 100.0F;
+
+  float n_pow = std::powf((float)(ctx->files_scanned.load()), P);
+  float progress_val = 100.0F * (n_pow / (n_pow + K));
+
+  g_ui_state.progress_bar->value(progress_val);
+  g_ui_state.progress_bar->redraw();
+
+  Fl::repeat_timeout(SCAN_TIMER_TICK, update_ui_timer_cb, ctx);
 }
 
 void background_scan_worker(ScanContext* ctx) {
@@ -145,7 +147,7 @@ void analyze_button_cb(Fl_Widget* widget, void* data) {
   if (file_tree_buffer_size > 0) {
     memset(file_tree_buffer, 0, file_tree_buffer_size * sizeof(FileNode));
 
-    size_t used_words = (file_tree_buffer_size >> 6) + 1;
+    size_t used_words = (file_tree_buffer_size >> BIT_SHIFT) + 1;
     size_t bytes_to_clear = used_words * sizeof(uint64_t);
 
     memset(is_directory_mask, 0, bytes_to_clear);
@@ -173,7 +175,7 @@ void analyze_button_cb(Fl_Widget* widget, void* data) {
   g_ui_state.is_scanning = true;
   g_ui_state.scan_thread = std::thread(background_scan_worker, ctx);
 
-  Fl::add_timeout(0.03, update_ui_timer_cb, ctx);
+  Fl::add_timeout(SCAN_TIMER_TICK, update_ui_timer_cb, ctx);
 }
 
 Fl_Flex* analyze_section() {

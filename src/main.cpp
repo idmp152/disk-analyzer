@@ -33,7 +33,7 @@ void window_callback(Fl_Widget* w, void* data) {
   w->hide();
 }
 
-int WINAPI WinMain(HINSTANCE hInstance,
+int WINAPI WinMain(HINSTANCE hInstance, // NOLINT(readability-inconsistent-declaration-parameter-name)
                    HINSTANCE hPrevInstance,
                    LPSTR lpCmdLine,
                    int nCmdShow) {

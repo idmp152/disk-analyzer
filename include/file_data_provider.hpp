@@ -7,9 +7,15 @@
 #include <vector>
 #include "arena.hpp"
 
-#define DEFAULT_ALIGNMENT 16
+#define DEFAULT_ALIGNMENT 16 // TODO(IlyaBelykh): Clean up define constants, make them in a "extern const int DEFAULT_ALIGNMENT;" in header, const int DEFAULT_ALIGNMENT = 16; in impl
+#define FILE_NODE_ALIGNMENT 64
 
-struct alignas(64) FileNode {
+#define BIT_SHIFT 6 //TODO(IlyaBelykh): also ambiguous name and makes it unsafe on include
+#define BIT_INDEX_MASK 63
+
+#define SCAN_PROGRESS_STEP 500
+
+struct alignas(FILE_NODE_ALIGNMENT) FileNode {
   const char* name;
   uint64_t size;
 
@@ -39,19 +45,19 @@ struct ScanContext {
 };
 
 inline bool get_bit(const uint64_t* mask, uint64_t idx) {
-  return ((mask[idx >> 6] >> (idx & 63)) & 1ULL) != 0u;
+  return ((mask[idx >> BIT_SHIFT] >> (idx & BIT_INDEX_MASK)) & 1ULL) != 0U;
 }
 
 inline void set_bit(uint64_t* mask, uint64_t idx) {
-  mask[idx >> 6] |= (1ULL << (idx & 63));
+  mask[idx >> BIT_SHIFT] |= (1ULL << (idx & BIT_INDEX_MASK));
 }
 
 inline void clear_bit(uint64_t* mask, uint64_t idx) {
-  mask[idx >> 6] &= ~(1ULL << (idx & 63));
+  mask[idx >> BIT_SHIFT] &= ~(1ULL << (idx & BIT_INDEX_MASK));
 }
 
 inline void toggle_bit(uint64_t* mask, uint64_t idx) {
-  mask[idx >> 6] ^= (1ULL << (idx & 63));
+  mask[idx >> BIT_SHIFT] ^= (1ULL << (idx & BIT_INDEX_MASK));
 }
 
 extern uint64_t* is_directory_mask;  // TODO(IlyaBelykh): Possibly unite in a
@@ -64,10 +70,10 @@ extern size_t file_tree_buffer_size;
 extern Arena* string_arena;
 extern std::vector<DriveInfo> drives;
 
-void provider_init(Arena* string_arena,
-                   FileNode* file_tree_buffer,
-                   uint64_t* is_directory_mask,
-                   uint64_t* is_expanded_mask);
+void provider_init(Arena* str_arena,
+                   FileNode* file_buffer,
+                   uint64_t* dir_mask,
+                   uint64_t* exp_mask);
 char* utf16_to_utf8(const wchar_t* str);
 void iterate_dir(const char* path, FileNode* parent, ScanContext* ctx);
 FileNode* add_root_node(const char* path);

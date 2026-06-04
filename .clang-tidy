@@ -5,19 +5,34 @@ Checks: >
   performance-*,
   readability-*,
   -readability-braces-around-statements,
+  -readability-make-member-function-const,
+  -bugprone-easily-swappable-parameters,
   modernize-use-nullptr,
   modernize-use-auto
 
 WarningsAsErrors: 'bugprone-*,performance-*'
 HeaderFilterRegex: 'include/.*'
+SystemHeaders: false
 
 CheckOptions:
-  - key:             readability-identifier-naming.FunctionCase
-    value:           snake_case
-  - key:             readability-identifier-naming.VariableCase
-    value:           snake_case
   - key:             readability-identifier-naming.StructCase
-    value:           snake_case
+    value:           CamelCase
+  - key:             readability-identifier-naming.ClassCase
+    value:           CamelCase
+  - key: readability-identifier-naming.ConstantCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.StaticConstantCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.GlobalConstantCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.MacroDefinitionCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.EnumConstantCase
+    value: UPPER_CASE
+  - key:             readability-identifier-naming.FunctionCase
+    value:           lower_case
+  - key:             readability-identifier-naming.VariableCase
+    value:           lower_case
   
   - key:             readability-identifier-length.MinimumVariableNameLength
     value:           '0'
@@ -25,4 +40,7 @@ CheckOptions:
     value:           '0'
   - key:             readability-identifier-length.MinimumLoopCounterNameLength
     value:           '0'
+
+  - key:             readability-magic-numbers.IgnorePowersOf2IntegerValues
+    value:           'true'
 ...

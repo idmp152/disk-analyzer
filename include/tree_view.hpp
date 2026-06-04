@@ -13,7 +13,7 @@
 
 #define DEPTH_MULTIPLIER 15
 
-enum TreeViewColumns { NAME_COL, SIZE_COL, SIZE_PERCENT_COL };
+enum TreeViewColumns : std::uint8_t { NAME_COL, SIZE_COL, SIZE_PERCENT_COL };
 
 struct ViewItem {
   uint64_t node_idx;
@@ -42,8 +42,8 @@ class TreeView : public Fl_Table {
  private:
   // Configs
   Fl_Font cell_font = FL_HELVETICA;
-  int cell_font_size = 16;
-  Fl_Color progressbar_color = fl_rgb_color(197, 202, 233);
+  int cell_font_size = 16;                                  //NOLINT(readability-magic-numbers)
+  Fl_Color progressbar_color = fl_rgb_color(197, 202, 233); //NOLINT(readability-magic-numbers)
 
   // Data
   std::vector<ViewItem> flat_view;

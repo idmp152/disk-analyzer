@@ -37,9 +37,9 @@ void FileTreeMap::draw_slice_and_dice(int x,
       continue;
     }
 
-    double fraction = (double)curr->size / parent_size;
+    double fraction = (double)curr->size / (double)parent_size;
     int projected_pixels =
-        vertical ? std::round(h * fraction) : std::round(w * fraction);
+        vertical ? (int)std::round(h * fraction) : (int)std::round(w * fraction);
 
     if (projected_pixels < PIXEL_THRESHOLD) {
       others_combined_size += curr->size;
@@ -50,12 +50,12 @@ void FileTreeMap::draw_slice_and_dice(int x,
     uint64_t start_size = accumulated_size;
     accumulated_size += curr->size;
 
-    double start_fraction = (double)start_size / parent_size;
-    double end_fraction = (double)accumulated_size / parent_size;
+    double start_fraction = (double)start_size / (double)parent_size;
+    double end_fraction = (double)accumulated_size / (double)parent_size;
 
     if (vertical) {
-      int start_y = y + std::round(h * start_fraction);
-      int end_y = y + std::round(h * end_fraction);
+      int start_y = y + (int)std::round(h * start_fraction);
+      int end_y = y + (int)std::round(h * end_fraction);
       int current_h = end_y - start_y;
 
       if (current_h > 0) {
@@ -68,8 +68,8 @@ void FileTreeMap::draw_slice_and_dice(int x,
 
       draw_slice_and_dice(x, start_y, w, current_h, !vertical, curr);
     } else {
-      int start_x = x + std::round(w * start_fraction);
-      int end_x = x + std::round(w * end_fraction);
+      int start_x = x + (int)std::round(w * start_fraction);
+      int end_x = x + (int)std::round(w * end_fraction);
       int current_w = end_x - start_x;
 
       if (current_w > 0) {
@@ -90,12 +90,12 @@ void FileTreeMap::draw_slice_and_dice(int x,
     uint64_t start_size = accumulated_size;
     accumulated_size += others_combined_size;
 
-    double start_fraction = (double)start_size / parent_size;
-    double end_fraction = (double)accumulated_size / parent_size;
+    double start_fraction = (double)start_size / (double)parent_size;
+    double end_fraction = (double)accumulated_size / (double)parent_size;
 
     if (vertical) {
-      int start_y = y + std::round(h * start_fraction);
-      int end_y = y + std::round(h * end_fraction);
+      int start_y = y + (int)std::round(h * start_fraction);
+      int end_y = y + (int)std::round(h * end_fraction);
       int current_h = end_y - start_y;
 
       if (current_h > 0) {
@@ -108,8 +108,8 @@ void FileTreeMap::draw_slice_and_dice(int x,
         visual_elements.push_back({x, start_y, w, current_h, nullptr});
       }
     } else {
-      int start_x = x + std::round(w * start_fraction);
-      int end_x = x + std::round(w * end_fraction);
+      int start_x = x + (int)std::round(w * start_fraction);
+      int end_x = x + (int)std::round(w * end_fraction);
       int current_w = end_x - start_x;
 
       if (current_w > 0) {
