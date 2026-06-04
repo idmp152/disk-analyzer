@@ -64,8 +64,7 @@ void update_stat_labels(int drive_idx) {
 	g_ui_state.val_used->label(buf_used);
 
 	get_size_string(drive.free_size, size_part, 32);
-	get_size_percent_string(drive.free_size, drive.total_size, percent_part,
-	                        32);
+	get_size_percent_string(drive.free_size, drive.total_size, percent_part, 32);
 	snprintf(buf_free, 64, "%s (%s)", size_part, percent_part);
 	g_ui_state.val_free->label(buf_free);
 
@@ -161,8 +160,7 @@ void analyze_button_cb(Fl_Widget* widget, void* data) {
 	g_ui_state.tree_view->fill_flat_view(nullptr);
 
 	size_t bytes_needed = path_to_scan.size() + 1;
-	char* arena_path =
-	    (char*)arena_alloc_align(string_arena, bytes_needed, DEFAULT_ALIGNMENT);
+	char* arena_path = (char*)arena_alloc_align(string_arena, bytes_needed, DEFAULT_ALIGNMENT);
 	if (arena_path == nullptr)
 		return;
 
@@ -241,8 +239,7 @@ Fl_Flex* stat_section() {
 }
 
 void export_txt_cb(Fl_Widget* w, void* data) {
-	Fl_Native_File_Chooser file_chooser(
-	    Fl_Native_File_Chooser::BROWSE_SAVE_FILE);
+	Fl_Native_File_Chooser file_chooser(Fl_Native_File_Chooser::BROWSE_SAVE_FILE);
 
 	file_chooser.title("Export Analysis Results");
 	file_chooser.preset_file("export.txt");
@@ -269,11 +266,9 @@ void export_txt_cb(Fl_Widget* w, void* data) {
 	outfile.close();
 }
 
-void export_csv_cb(
-    Fl_Widget* w,
-    void* data) {  // TODO(IlyaBelykh): refactor to avoid repetition
-	Fl_Native_File_Chooser file_chooser(
-	    Fl_Native_File_Chooser::BROWSE_SAVE_FILE);
+void export_csv_cb(Fl_Widget* w,
+                   void* data) {  // TODO(IlyaBelykh): refactor to avoid repetition
+	Fl_Native_File_Chooser file_chooser(Fl_Native_File_Chooser::BROWSE_SAVE_FILE);
 
 	file_chooser.title("Export Analysis Results");
 	file_chooser.preset_file("export.csv");
@@ -304,8 +299,7 @@ void export_csv_cb(
 }
 
 Fl_Flex* main_div() {
-	auto* main_layout = new Fl_Flex(0, 0, DEFAULT_WINDOW_WIDTH,
-	                                DEFAULT_WINDOW_HEIGHT, Fl_Flex::VERTICAL);
+	auto* main_layout = new Fl_Flex(0, 0, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, Fl_Flex::VERTICAL);
 
 	auto* menu_bar = new Fl_Menu_Bar(0, 0, 0, 0);
 	menu_bar->add("File/Export as TXT...", 0, export_txt_cb);

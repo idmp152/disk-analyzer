@@ -14,10 +14,7 @@ size_t file_tree_buffer_size = 0;
 Arena* string_arena;
 std::vector<DriveInfo> drives;
 
-void provider_init(Arena* str_arena,
-                   FileNode* file_buffer,
-                   uint64_t* dir_mask,
-                   uint64_t* exp_mask) {
+void provider_init(Arena* str_arena, FileNode* file_buffer, uint64_t* dir_mask, uint64_t* exp_mask) {
 	is_directory_mask = dir_mask;
 	is_expanded_mask = exp_mask;
 	file_tree_buffer = file_buffer;
@@ -25,14 +22,11 @@ void provider_init(Arena* str_arena,
 }
 
 char* utf16_to_utf8(const wchar_t* str) {
-	int size_needed =
-	    WideCharToMultiByte(CP_UTF8, 0, str, -1, nullptr, 0, nullptr, nullptr);
-	char* new_str = (char*)arena_alloc_align(
-	    string_arena, size_needed + 1,
-	    DEFAULT_ALIGNMENT);  // TODO(IlyaBelykh): handle out of memory possible
-	                         // exceptions
-	WideCharToMultiByte(CP_UTF8, 0, str, -1, new_str, size_needed, nullptr,
-	                    nullptr);
+	int size_needed = WideCharToMultiByte(CP_UTF8, 0, str, -1, nullptr, 0, nullptr, nullptr);
+	char* new_str = (char*)arena_alloc_align(string_arena, size_needed + 1,
+	                                         DEFAULT_ALIGNMENT);  // TODO(IlyaBelykh): handle out of memory possible
+	                                                              // exceptions
+	WideCharToMultiByte(CP_UTF8, 0, str, -1, new_str, size_needed, nullptr, nullptr);
 	return new_str;
 }
 
@@ -44,8 +38,7 @@ void iterate_dir(const char* path, FileNode* parent, ScanContext* ctx) {
 	search_mask += "\\*";
 
 	wchar_t w_search_mask[MAX_PATH];
-	fl_utf8towc(search_mask.c_str(), search_mask.size(), w_search_mask,
-	            MAX_PATH);
+	fl_utf8towc(search_mask.c_str(), search_mask.size(), w_search_mask, MAX_PATH);
 
 	WIN32_FIND_DATAW data;
 	HANDLE hFind = FindFirstFileW(w_search_mask, &data);
@@ -58,18 +51,15 @@ void iterate_dir(const char* path, FileNode* parent, ScanContext* ctx) {
 			if (ctx->should_cancel.load())
 				break;
 
-			if (wcscmp(data.cFileName, L".") == 0 ||
-			    wcscmp(data.cFileName, L"..") == 0) {
+			if (wcscmp(data.cFileName, L".") == 0 || wcscmp(data.cFileName, L"..") == 0) {
 				continue;
 			}
 
 			char* filename = utf16_to_utf8(data.cFileName);
 
-			FileNode* file =
-			    &file_tree_buffer
-			        [file_tree_buffer_size++];  // TODO(IlyaBelykh):
-			                                    // handle out of memory
-			                                    // possible exceptions
+			FileNode* file = &file_tree_buffer[file_tree_buffer_size++];  // TODO(IlyaBelykh):
+			                                                              // handle out of memory
+			                                                              // possible exceptions
 			file->name = filename;
 			file->parent = parent;
 			prev_node->next_sibling = file;
@@ -83,8 +73,7 @@ void iterate_dir(const char* path, FileNode* parent, ScanContext* ctx) {
 				set_bit(is_directory_mask, (uint64_t)(file - file_tree_buffer));
 				iterate_dir(search_mask.c_str(), file, ctx);
 			} else {
-				file->size =
-				    ((uint64_t)(data.nFileSizeHigh) << 32) | data.nFileSizeLow;
+				file->size = ((uint64_t)(data.nFileSizeHigh) << 32) | data.nFileSizeLow;
 			}
 
 			parent->size += file->size;
@@ -92,8 +81,7 @@ void iterate_dir(const char* path, FileNode* parent, ScanContext* ctx) {
 			if (ctx->files_scanned % SCAN_PROGRESS_STEP == 0) {
 				Fl::awake();
 			}
-		} while (FindNextFileW(hFind, &data) !=
-		         0);  // TODO(IlyaBelykh): implicit bool conversion?
+		} while (FindNextFileW(hFind, &data) != 0);  // TODO(IlyaBelykh): implicit bool conversion?
 		FindClose(hFind);
 		parent->first_child = dummy_node.next_sibling;
 	}
@@ -107,35 +95,25 @@ FileNode* add_root_node(const char* path) {
 	return root;
 }
 
-void traverse_tree_out(FileNode* root,
-                       unsigned short depth,
-                       std::ostream& stream) {
+void traverse_tree_out(FileNode* root, unsigned short depth, std::ostream& stream) {
 	FileNode* curr = root;
 	while (curr != nullptr) {
 		char size_buf[32];
 		char percent_buf[32];
 		char format_buf[128];
 		get_size_string(curr->size, size_buf, 32);
-		get_size_percent_string(
-		    curr->size,
-		    ((curr->parent) != nullptr) ? curr->parent->size : curr->size,
-		    percent_buf, 32);
+		get_size_percent_string(curr->size, ((curr->parent) != nullptr) ? curr->parent->size : curr->size, percent_buf,
+		                        32);
 		snprintf(format_buf, 128, " (%s) [%s]", size_buf, percent_buf);
 		std::string padding(depth * 2, ' ');
-		stream << padding
-		       << (get_bit(is_directory_mask,
-		                   (uint64_t)(curr - file_tree_buffer))
-		               ? "- "
-		               : "> ")
+		stream << padding << (get_bit(is_directory_mask, (uint64_t)(curr - file_tree_buffer)) ? "- " : "> ")
 		       << curr->name << format_buf << std::endl;
 		traverse_tree_out(curr->first_child, depth + 1, stream);
 		curr = curr->next_sibling;
 	}
 }
 
-void traverse_tree_csv(FileNode* root,
-                       unsigned short depth,
-                       std::ostream& stream) {
+void traverse_tree_csv(FileNode* root, unsigned short depth, std::ostream& stream) {
 	FileNode* curr = root;
 	while (curr != nullptr) {
 		auto node_index = (uint64_t)(curr - file_tree_buffer);
@@ -158,10 +136,8 @@ void traverse_tree_csv(FileNode* root,
 		stream << size_buf << ";";
 
 		char percent_buf[32];
-		get_size_percent_string(
-		    curr->size,
-		    ((curr->parent) != nullptr) ? curr->parent->size : curr->size,
-		    percent_buf, 32);
+		get_size_percent_string(curr->size, ((curr->parent) != nullptr) ? curr->parent->size : curr->size, percent_buf,
+		                        32);
 		stream << percent_buf << std::endl;
 
 		traverse_tree_csv(curr->first_child, depth + 1, stream);
@@ -181,16 +157,14 @@ void fill_drive_info() {
 	while (*drive_letter != L'\0') {
 		UINT type = GetDriveTypeW(drive_letter);
 
-		if (type == DRIVE_UNKNOWN || type == DRIVE_NO_ROOT_DIR ||
-		    type == DRIVE_CDROM) {
+		if (type == DRIVE_UNKNOWN || type == DRIVE_NO_ROOT_DIR || type == DRIVE_CDROM) {
 			drive_letter += wcslen(drive_letter) + 1;
 			continue;
 		}
 
 		DriveInfo info;
 		char name_copy_buf[256];
-		fl_utf8fromwc(name_copy_buf, 256, drive_letter,
-		              wcslen(drive_letter) + 1);
+		fl_utf8fromwc(name_copy_buf, 256, drive_letter, wcslen(drive_letter) + 1);
 		info.name = name_copy_buf;  // TODO(IlyaBelykh): Look at this, since
 		                            // utf16_to_utf8 stores the new string into
 		                            // the string arena
@@ -201,8 +175,7 @@ void fill_drive_info() {
 
 		WCHAR fs_name[MAX_PATH] = L"";
 
-		if (GetVolumeInformationW(drive_letter, nullptr, 0, nullptr, nullptr,
-		                          nullptr, fs_name, MAX_PATH) != 0) {
+		if (GetVolumeInformationW(drive_letter, nullptr, 0, nullptr, nullptr, nullptr, fs_name, MAX_PATH) != 0) {
 			info.is_ntfs = (wcscmp(fs_name, L"NTFS") == 0);
 		}
 
@@ -210,8 +183,7 @@ void fill_drive_info() {
 		ULARGE_INTEGER totalNumberOfBytes;
 		ULARGE_INTEGER totalNumberOfFreeBytes;
 
-		if (GetDiskFreeSpaceExW(drive_letter, &freeBytesAvailable,
-		                        &totalNumberOfBytes, &totalNumberOfFreeBytes) !=
+		if (GetDiskFreeSpaceExW(drive_letter, &freeBytesAvailable, &totalNumberOfBytes, &totalNumberOfFreeBytes) !=
 		    0) {  // TODO(IlyaBelykh): implicit bool conversion?
 			info.total_size = totalNumberOfBytes.QuadPart;
 			info.free_size = totalNumberOfFreeBytes.QuadPart;

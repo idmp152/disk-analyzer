@@ -33,11 +33,8 @@ void window_callback(Fl_Widget* w, void* data) {
 	w->hide();
 }
 
-int WINAPI WinMain( // NOLINT(readability-inconsistent-declaration-parameter-name)
-    HINSTANCE hInstance,  
-    HINSTANCE hPrevInstance,
-    LPSTR lpCmdLine,
-    int nCmdShow) {
+int WINAPI WinMain(  // NOLINT(readability-inconsistent-declaration-parameter-name)
+    HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
 	SetConsoleOutputCP(CP_UTF8);
 	Fl::get_system_colors();
 
@@ -47,21 +44,17 @@ int WINAPI WinMain( // NOLINT(readability-inconsistent-declaration-parameter-nam
 	string_buffer = malloc(STRING_BUFFER_CAPACITY);
 	arena_init(&string_arena, string_buffer, STRING_BUFFER_CAPACITY);
 
-	size_t mask_bytes =
-	    (((FILE_TREE_BUFFER_CAPACITY / sizeof(FileNode)) + 63) / 64) *
-	    sizeof(uint64_t);
+	size_t mask_bytes = (((FILE_TREE_BUFFER_CAPACITY / sizeof(FileNode)) + 63) / 64) * sizeof(uint64_t);
 	auto* is_directory_mask = (uint64_t*)calloc(1, mask_bytes);
 	auto* is_expanded_mask = (uint64_t*)calloc(1, mask_bytes);
 
-	provider_init(&string_arena, file_tree_buffer, is_directory_mask,
-	              is_expanded_mask);
+	provider_init(&string_arena, file_tree_buffer, is_directory_mask, is_expanded_mask);
 	fill_drive_info();
 
 	Fl::set_font(MAIN_FONT, "Segoe UI");
 	Fl::set_font(MAIN_FONT_BOLD, "BSegoe UI");
 
-	auto* window = new Fl_Double_Window(DEFAULT_WINDOW_WIDTH,
-	                                    DEFAULT_WINDOW_HEIGHT, "Disk Analyzer");
+	auto* window = new Fl_Double_Window(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, "Disk Analyzer");
 
 	HICON hIcon = LoadIcon(GetModuleHandle(nullptr), MAKEINTRESOURCE(101));
 	if (hIcon != nullptr) {
@@ -71,8 +64,7 @@ int WINAPI WinMain( // NOLINT(readability-inconsistent-declaration-parameter-nam
 	Fl_Flex* main_container = main_div();
 
 	window->resizable(main_container);
-	window->size_range(INFO_CONTAINER_SIZE * 2,
-	                   TOP_ROW_HEIGHT + TREEMAP_WIDGET_SIZE);
+	window->size_range(INFO_CONTAINER_SIZE * 2, TOP_ROW_HEIGHT + TREEMAP_WIDGET_SIZE);
 	window->end();
 	window->show();
 	window->callback(window_callback);

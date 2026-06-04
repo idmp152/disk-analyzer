@@ -30,21 +30,15 @@ class TreeView : public Fl_Table {
 
    protected:
 	// FLTK methods
-	void draw_cell(TableContext context,
-	               int ROW = 0,
-	               int COL = 0,
-	               int X = 0,
-	               int Y = 0,
-	               int W = 0,
+	void draw_cell(TableContext context, int ROW = 0, int COL = 0, int X = 0, int Y = 0, int W = 0,
 	               int H = 0) FL_OVERRIDE;
 	void resize(int X, int Y, int W, int H) FL_OVERRIDE;
 
    private:
 	// Configs
 	Fl_Font cell_font = FL_HELVETICA;
-	int cell_font_size = 16;  // NOLINT(readability-magic-numbers)
-	Fl_Color progressbar_color =
-	    fl_rgb_color(197, 202, 233);  // NOLINT(readability-magic-numbers)
+	int cell_font_size = 16;                                   // NOLINT(readability-magic-numbers)
+	Fl_Color progressbar_color = fl_rgb_color(197, 202, 233);  // NOLINT(readability-magic-numbers)
 
 	// Data
 	std::vector<ViewItem> flat_view;
@@ -56,39 +50,15 @@ class TreeView : public Fl_Table {
 
 	// Rendering
 	void draw_content_cell(int ROW, int COL, int X, int Y, int W, int H);
-	static void begin_draw_cell(
-	    int X,
-	    int Y,
-	    int W,
-	    int H);  // TODO(IlyaBelykh): clang-tidy offered making them static
-	static void end_draw_cell(
-	    int X,
-	    int Y,
-	    int W,
-	    int H);  // My counter-offer would be making them a non-member function,
-	             // will take a look into this later
-	void draw_data(const char* s,
-	               int X,
-	               int Y,
-	               int W,
-	               int H,
-	               Fl_Align alignment);
+	static void begin_draw_cell(int X, int Y, int W,
+	                            int H);  // TODO(IlyaBelykh): clang-tidy offered making them static
+	static void end_draw_cell(int X, int Y, int W,
+	                          int H);  // My counter-offer would be making them a non-member function,
+	                                   // will take a look into this later
+	void draw_data(const char* s, int X, int Y, int W, int H, Fl_Align alignment);
 	void draw_header(const char* s, int X, int Y, int W, int H);
-	void draw_name(const char* s,
-	               int X,
-	               int Y,
-	               int W,
-	               int H,
-	               int depth,
-	               bool is_directory,
-	               bool is_expanded);
-	void draw_progressbar(const char* s,
-	                      int X,
-	                      int Y,
-	                      int W,
-	                      int H,
-	                      Fl_Align alignment,
-	                      float value);
+	void draw_name(const char* s, int X, int Y, int W, int H, int depth, bool is_directory, bool is_expanded);
+	void draw_progressbar(const char* s, int X, int Y, int W, int H, Fl_Align alignment, float value);
 
 	// Other
 	void recalculate_sizes();

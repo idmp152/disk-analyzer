@@ -7,20 +7,14 @@
 #include "formats.hpp"
 #include "tree_view.hpp"
 
-FileTreeMap::FileTreeMap(int X, int Y, int W, int H, const char* L)
-    : Fl_Widget(X, Y, W, H, L) {}
+FileTreeMap::FileTreeMap(int X, int Y, int W, int H, const char* L) : Fl_Widget(X, Y, W, H, L) {}
 
 void FileTreeMap::set_root(FileNode* root) {
 	root_node = root;
 	redraw();
 }
 
-void FileTreeMap::draw_slice_and_dice(int x,
-                                      int y,
-                                      int w,
-                                      int h,
-                                      bool vertical,
-                                      FileNode* root) {
+void FileTreeMap::draw_slice_and_dice(int x, int y, int w, int h, bool vertical, FileNode* root) {
 	if (w <= 3 || h <= 3 || (root == nullptr) || (root->first_child == nullptr))
 		return;
 
@@ -38,8 +32,7 @@ void FileTreeMap::draw_slice_and_dice(int x,
 		}
 
 		double fraction = (double)curr->size / (double)parent_size;
-		int projected_pixels = vertical ? (int)std::round(h * fraction)
-		                                : (int)std::round(w * fraction);
+		int projected_pixels = vertical ? (int)std::round(h * fraction) : (int)std::round(w * fraction);
 
 		if (projected_pixels < PIXEL_THRESHOLD) {
 			others_combined_size += curr->size;
@@ -166,14 +159,12 @@ int FileTreeMap::handle(int event) {
 
 			if (is_hovered_others) {
 				snprintf(tooltip_buf, sizeof(tooltip_buf), "Small files");
-			} else if ((hovered_node != nullptr) &&
-			           (hovered_node->name != nullptr)) {
+			} else if ((hovered_node != nullptr) && (hovered_node->name != nullptr)) {
 				char size_buf[32];
 				char name_buf[128];
 				get_size_string(hovered_node->size, size_buf, 32);
 				get_full_path(hovered_node, name_buf, 128);
-				snprintf(tooltip_buf, sizeof(tooltip_buf), "%s (%s)", name_buf,
-				         size_buf);
+				snprintf(tooltip_buf, sizeof(tooltip_buf), "%s (%s)", name_buf, size_buf);
 			}
 
 			tooltip(tooltip_buf);

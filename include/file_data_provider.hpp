@@ -13,8 +13,7 @@
 	    // = 16; in impl
 #define FILE_NODE_ALIGNMENT 64
 
-#define BIT_SHIFT \
-	6  // TODO(IlyaBelykh): also ambiguous name and makes it unsafe on include
+#define BIT_SHIFT 6  // TODO(IlyaBelykh): also ambiguous name and makes it unsafe on include
 #define BIT_INDEX_MASK 63
 
 #define SCAN_PROGRESS_STEP 500
@@ -74,18 +73,11 @@ extern size_t file_tree_buffer_size;
 extern Arena* string_arena;
 extern std::vector<DriveInfo> drives;
 
-void provider_init(Arena* str_arena,
-                   FileNode* file_buffer,
-                   uint64_t* dir_mask,
-                   uint64_t* exp_mask);
+void provider_init(Arena* str_arena, FileNode* file_buffer, uint64_t* dir_mask, uint64_t* exp_mask);
 char* utf16_to_utf8(const wchar_t* str);
 void iterate_dir(const char* path, FileNode* parent, ScanContext* ctx);
 FileNode* add_root_node(const char* path);
-void traverse_tree_out(FileNode* root,
-                       unsigned short depth,
-                       std::ostream& stream = std::cout);
-void traverse_tree_csv(FileNode* root,
-                       unsigned short depth,
-                       std::ostream& stream = std::cout);
+void traverse_tree_out(FileNode* root, unsigned short depth, std::ostream& stream = std::cout);
+void traverse_tree_csv(FileNode* root, unsigned short depth, std::ostream& stream = std::cout);
 void fill_drive_info();
 void sort_directory_tree(FileNode* root);

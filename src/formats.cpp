@@ -17,18 +17,14 @@ void get_size_string(uint64_t size, char* buffer, size_t buf_size) {
 	uint64_t divisor = 1ULL << (unit_idx * 10);
 	uint64_t whole_part = size / divisor;
 	uint64_t remainder = size % divisor;
-	double full_size = (double)whole_part +
-	                   ((double)remainder /
-	                    divisor);  // all of this trickery to not lose precision
-	                               // (double only holds 2^53 mantissa)
+	double full_size =
+	    (double)whole_part + ((double)remainder / divisor);  // all of this trickery to not lose precision
+	                                                         // (double only holds 2^53 mantissa)
 
 	snprintf(buffer, buf_size, "%.1f %s", full_size, available_units[unit_idx]);
 }
 
-double get_size_percent_string(uint64_t size,
-                               uint64_t parent_size,
-                               char* buffer,
-                               size_t buf_size) {
+double get_size_percent_string(uint64_t size, uint64_t parent_size, char* buffer, size_t buf_size) {
 	double percentage = (double)size / parent_size;
 	snprintf(buffer, buf_size, "%.1f %%", percentage * 100);
 	return percentage;
@@ -56,8 +52,7 @@ void get_full_path(FileNode* node, char* buffer, size_t buf_size) {
 
 		size_t name_len = strlen(curr->name);
 
-		if (!is_first && curr->name[name_len - 1] != '\\' &&
-		    curr->name[name_len - 1] != '/') {
+		if (!is_first && curr->name[name_len - 1] != '\\' && curr->name[name_len - 1] != '/') {
 			if (current_pos >= 1) {
 				current_pos--;
 				buffer[current_pos] = '\\';

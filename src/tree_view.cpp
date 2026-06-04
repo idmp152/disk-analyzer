@@ -5,18 +5,13 @@
 #include "formats.hpp"
 
 const char* COL_HEADERS[COLS] = {"Name", "Size", "Percentage of parent size"};
-const Fl_Align COL_ALIGNMENTS[COLS] = {FL_ALIGN_LEFT, FL_ALIGN_RIGHT,
-                                       FL_ALIGN_RIGHT};
-const int COL_SIZE_RATIOS[COLS] = {
-    4, 1, 2};  //  4:1:2 ratio for size, percentage and name is adequate
+const Fl_Align COL_ALIGNMENTS[COLS] = {FL_ALIGN_LEFT, FL_ALIGN_RIGHT, FL_ALIGN_RIGHT};
+const int COL_SIZE_RATIOS[COLS] = {4, 1, 2};  //  4:1:2 ratio for size, percentage and name is adequate
 
-void build_flat_view(FileNode* root,
-                     std::vector<ViewItem>* flat_view,
-                     unsigned short depth) {
+void build_flat_view(FileNode* root, std::vector<ViewItem>* flat_view, unsigned short depth) {
 	FileNode* curr = root;
 	while (curr != nullptr) {
-		ViewItem item = {.node_idx = (uint64_t)(curr - file_tree_buffer),
-		                 .depth = depth};
+		ViewItem item = {.node_idx = (uint64_t)(curr - file_tree_buffer), .depth = depth};
 		flat_view->push_back(item);
 		if (get_bit(is_expanded_mask, (uint64_t)(curr - file_tree_buffer)))
 			build_flat_view(curr->first_child, flat_view, depth + 1);
@@ -24,12 +19,7 @@ void build_flat_view(FileNode* root,
 	}
 }
 
-void draw_padded_text(const char* s,
-                      int X,
-                      int Y,
-                      int W,
-                      int H,
-                      Fl_Align alignment) {
+void draw_padded_text(const char* s, int X, int Y, int W, int H, Fl_Align alignment) {
 	int text_x = X + CELL_TEXT_PADDING;
 	int text_w = W - (CELL_TEXT_PADDING * 2);
 	fl_color(FL_GRAY0);
@@ -94,57 +84,34 @@ void TreeView::draw_header(const char* s, int X, int Y, int W, int H) {
 	fl_pop_clip();
 }
 
-void TreeView::draw_name(const char* s,
-                         int X,
-                         int Y,
-                         int W,
-                         int H,
-                         int depth,
-                         bool is_directory,
-                         bool is_expanded) {
+void TreeView::draw_name(const char* s, int X, int Y, int W, int H, int depth, bool is_directory, bool is_expanded) {
 	begin_draw_cell(X, Y, W, H);
 	const int PADDING = 5;
 	int icon_size = H;
 	int expand_size = icon_size;
 
-	draw_padded_text(s, X + depth + icon_size + expand_size, Y,
-	                 W - depth - icon_size - expand_size, H, FL_ALIGN_LEFT);
+	draw_padded_text(s, X + depth + icon_size + expand_size, Y, W - depth - icon_size - expand_size, H, FL_ALIGN_LEFT);
 	// fl_draw("📂", X + 5 + depth, Y + 5, icon_size, icon_size,
 	// FL_ALIGN_CENTER);
 	// TODO(IlyaBelykh): Possibly load an emoji font from the Segoe UI pack and
 	// make an icon decider function based on the extension
-	fl_draw_symbol((is_directory ? "@fileopen" : "@filenew"),
-	               X + PADDING + depth + expand_size, Y + PADDING,
-	               icon_size - PADDING, icon_size - PADDING,
-	               (is_directory ? FL_YELLOW : FL_GRAY));
+	fl_draw_symbol((is_directory ? "@fileopen" : "@filenew"), X + PADDING + depth + expand_size, Y + PADDING,
+	               icon_size - PADDING, icon_size - PADDING, (is_directory ? FL_YELLOW : FL_GRAY));
 	fl_color(FL_GRAY0);
 	if (is_directory) {
-		fl_draw(is_expanded ? "-" : "+", X + depth, Y, expand_size, expand_size,
-		        FL_ALIGN_CENTER);
-		fl_rect(X + depth + PADDING, Y + PADDING + 2,
-		        expand_size - (2 * PADDING), expand_size - (2 * PADDING));
+		fl_draw(is_expanded ? "-" : "+", X + depth, Y, expand_size, expand_size, FL_ALIGN_CENTER);
+		fl_rect(X + depth + PADDING, Y + PADDING + 2, expand_size - (2 * PADDING), expand_size - (2 * PADDING));
 	}
 	end_draw_cell(X, Y, W, H);
 }
 
-void TreeView::draw_data(const char* s,
-                         int X,
-                         int Y,
-                         int W,
-                         int H,
-                         Fl_Align alignment) {
+void TreeView::draw_data(const char* s, int X, int Y, int W, int H, Fl_Align alignment) {
 	begin_draw_cell(X, Y, W, H);
 	draw_padded_text(s, X, Y, W, H, alignment);
 	end_draw_cell(X, Y, W, H);
 }
 
-void TreeView::draw_progressbar(const char* s,
-                                int X,
-                                int Y,
-                                int W,
-                                int H,
-                                Fl_Align alignment,
-                                float value) {
+void TreeView::draw_progressbar(const char* s, int X, int Y, int W, int H, Fl_Align alignment, float value) {
 	begin_draw_cell(X, Y, W, H);
 
 	fl_color(progressbar_color);
@@ -161,10 +128,8 @@ void TreeView::draw_content_cell(int ROW, int COL, int X, int Y, int W, int H) {
 	char char_buf[32];
 	switch (COL) {
 		case NAME_COL:
-			draw_name(node->name, X, Y, W, H,
-			          flat_view[ROW].depth * DEPTH_MULTIPLIER,
-			          get_bit(is_directory_mask, node_idx),
-			          get_bit(is_expanded_mask, node_idx));
+			draw_name(node->name, X, Y, W, H, flat_view[ROW].depth * DEPTH_MULTIPLIER,
+			          get_bit(is_directory_mask, node_idx), get_bit(is_expanded_mask, node_idx));
 			break;
 		case SIZE_COL:
 			get_size_string(node->size, char_buf, 32);
@@ -173,13 +138,11 @@ void TreeView::draw_content_cell(int ROW, int COL, int X, int Y, int W, int H) {
 		case SIZE_PERCENT_COL: {
 			double percentage = 1;
 			if (node->parent != nullptr) {
-				percentage = get_size_percent_string(
-				    node->size, node->parent->size, char_buf, 32);
+				percentage = get_size_percent_string(node->size, node->parent->size, char_buf, 32);
 			} else {
 				strcpy(char_buf, "100.0 %");
 			}
-			draw_progressbar(char_buf, X, Y, W, H, COL_ALIGNMENTS[COL],
-			                 percentage);
+			draw_progressbar(char_buf, X, Y, W, H, COL_ALIGNMENTS[COL], percentage);
 			break;
 		}
 		default:
@@ -211,13 +174,7 @@ void TreeView::recalculate_sizes() {
 
 // FLTK functions
 
-void TreeView::draw_cell(TableContext context,
-                         int ROW,
-                         int COL,
-                         int X,
-                         int Y,
-                         int W,
-                         int H) {
+void TreeView::draw_cell(TableContext context, int ROW, int COL, int X, int Y, int W, int H) {
 	switch (context) {
 		case CONTEXT_STARTPAGE:
 			fl_font(cell_font, cell_font_size);
@@ -241,8 +198,7 @@ void TreeView::resize(int X, int Y, int W, int H) {
 
 // Public functions
 
-TreeView::TreeView(int X, int Y, int W, int H, const char* L)
-    : Fl_Table(X, Y, W, H, L) {
+TreeView::TreeView(int X, int Y, int W, int H, const char* L) : Fl_Table(X, Y, W, H, L) {
 	callback(table_callback, nullptr);
 	when(FL_WHEN_CHANGED);
 
