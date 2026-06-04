@@ -7,57 +7,61 @@
 #include <vector>
 #include "arena.hpp"
 
-#define DEFAULT_ALIGNMENT 16 // TODO(IlyaBelykh): Clean up define constants, make them in a "extern const int DEFAULT_ALIGNMENT;" in header, const int DEFAULT_ALIGNMENT = 16; in impl
+#define DEFAULT_ALIGNMENT \
+	16  // TODO(IlyaBelykh): Clean up define constants, make them in a "extern
+	    // const int DEFAULT_ALIGNMENT;" in header, const int DEFAULT_ALIGNMENT
+	    // = 16; in impl
 #define FILE_NODE_ALIGNMENT 64
 
-#define BIT_SHIFT 6 //TODO(IlyaBelykh): also ambiguous name and makes it unsafe on include
+#define BIT_SHIFT \
+	6  // TODO(IlyaBelykh): also ambiguous name and makes it unsafe on include
 #define BIT_INDEX_MASK 63
 
 #define SCAN_PROGRESS_STEP 500
 
 struct alignas(FILE_NODE_ALIGNMENT) FileNode {
-  const char* name;
-  uint64_t size;
+	const char* name;
+	uint64_t size;
 
-  FileNode* parent;
+	FileNode* parent;
 
-  FileNode* first_child;
-  FileNode* next_sibling;
+	FileNode* first_child;
+	FileNode* next_sibling;
 };
 
 struct DriveInfo {
-  std::string name;
+	std::string name;
 
-  uint64_t total_size;
-  uint64_t free_size;
+	uint64_t total_size;
+	uint64_t free_size;
 
-  bool is_ntfs;
+	bool is_ntfs;
 };
 
 struct ScanContext {
-  const char* start_path;
-  FileNode* root_node;
+	const char* start_path;
+	FileNode* root_node;
 
-  std::atomic<uint64_t> files_scanned{0};
+	std::atomic<uint64_t> files_scanned{0};
 
-  std::atomic<bool> is_finished{false};
-  std::atomic<bool> should_cancel{false};
+	std::atomic<bool> is_finished{false};
+	std::atomic<bool> should_cancel{false};
 };
 
 inline bool get_bit(const uint64_t* mask, uint64_t idx) {
-  return ((mask[idx >> BIT_SHIFT] >> (idx & BIT_INDEX_MASK)) & 1ULL) != 0U;
+	return ((mask[idx >> BIT_SHIFT] >> (idx & BIT_INDEX_MASK)) & 1ULL) != 0U;
 }
 
 inline void set_bit(uint64_t* mask, uint64_t idx) {
-  mask[idx >> BIT_SHIFT] |= (1ULL << (idx & BIT_INDEX_MASK));
+	mask[idx >> BIT_SHIFT] |= (1ULL << (idx & BIT_INDEX_MASK));
 }
 
 inline void clear_bit(uint64_t* mask, uint64_t idx) {
-  mask[idx >> BIT_SHIFT] &= ~(1ULL << (idx & BIT_INDEX_MASK));
+	mask[idx >> BIT_SHIFT] &= ~(1ULL << (idx & BIT_INDEX_MASK));
 }
 
 inline void toggle_bit(uint64_t* mask, uint64_t idx) {
-  mask[idx >> BIT_SHIFT] ^= (1ULL << (idx & BIT_INDEX_MASK));
+	mask[idx >> BIT_SHIFT] ^= (1ULL << (idx & BIT_INDEX_MASK));
 }
 
 extern uint64_t* is_directory_mask;  // TODO(IlyaBelykh): Possibly unite in a

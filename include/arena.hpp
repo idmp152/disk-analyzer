@@ -2,9 +2,9 @@
 #include <cstdint>
 
 struct Arena {
-  unsigned char* buf;
-  size_t buf_len;
-  size_t offset;
+	unsigned char* buf;
+	size_t buf_len;
+	size_t offset;
 };
 
 bool is_power_of_two(uintptr_t ptr);

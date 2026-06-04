@@ -29,19 +29,19 @@
 #define PROGRESSBAR_COLOR 0x5ced7300
 
 struct UIState {
-  Fl_Choice* drive_choice = nullptr;
-  Fl_Box* val_selected = nullptr;
-  Fl_Box* val_total = nullptr;
-  Fl_Box* val_used = nullptr;
-  Fl_Box* val_free = nullptr;
-  Fl_Progress* progress_bar = nullptr;
-  FileTreeMap* tree_map = nullptr;
-  TreeView* tree_view = nullptr;
+	Fl_Choice* drive_choice = nullptr;
+	Fl_Box* val_selected = nullptr;
+	Fl_Box* val_total = nullptr;
+	Fl_Box* val_used = nullptr;
+	Fl_Box* val_free = nullptr;
+	Fl_Progress* progress_bar = nullptr;
+	FileTreeMap* tree_map = nullptr;
+	TreeView* tree_view = nullptr;
 
-  std::thread scan_thread;
-  ScanContext* current_ctx = nullptr;
-  bool is_scanning = false;
-  FileNode* root = nullptr;
+	std::thread scan_thread;
+	ScanContext* current_ctx = nullptr;
+	bool is_scanning = false;
+	FileNode* root = nullptr;
 };
 
 extern UIState g_ui_state;
